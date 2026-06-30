@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +22,19 @@ def get_market_data(ticker: str) -> dict | None:
             logger.warning(f"Insufficient data for {ticker}")
             return None
 
-        # Extract scalar values from Series
-        current = data.iloc[-1]
-        previous = data.iloc[-2]
+        # Flatten columns if MultiIndex (yfinance can return MultiIndex for single ticker)
+        if isinstance(data.columns, pd.MultiIndex):
+            data.columns = data.columns.get_level_values(0)
 
-        current_open = float(current['Open'])
-        current_close = float(current['Close'])
-        current_volume = float(current['Volume'])
-        previous_close = float(previous['Close'])
+        # Get most recent row values as numpy arrays then extract scalar
+        current_row = data.iloc[-1]
+        prev_row = data.iloc[-2]
+
+        # Convert Series values to scalars using .item() or direct access
+        current_open = float(current_row['Open'].item() if hasattr(current_row['Open'], 'item') else current_row['Open'])
+        current_close = float(current_row['Close'].item() if hasattr(current_row['Close'], 'item') else current_row['Close'])
+        current_volume = float(current_row['Volume'].item() if hasattr(current_row['Volume'], 'item') else current_row['Volume'])
+        previous_close = float(prev_row['Close'].item() if hasattr(prev_row['Close'], 'item') else prev_row['Close'])
 
         # Calculate gap percentage
         gap_pct = 0.0
@@ -36,13 +42,16 @@ def get_market_data(ticker: str) -> dict | None:
             gap_pct = ((current_open - previous_close) / previous_close) * 100
 
         # Calculate 20-day average volume
-        volume_avg_20 = float(data['Volume'].tail(20).mean())
-        if pd.isna(volume_avg_20) or volume_avg_20 <= 0:
+        volume_mean = data['Volume'].tail(20).mean()
+        volume_avg_20 = float(volume_mean.item() if hasattr(volume_mean, 'item') else volume_mean)
+
+        if np.isnan(volume_avg_20) or volume_avg_20 <= 0:
             volume_avg_20 = current_volume
 
         # Calculate EMA100
         ema_100_series = data['Close'].ewm(span=100).mean()
-        ema_100 = float(ema_100_series.iloc[-1])
+        ema_100_val = ema_100_series.iloc[-1]
+        ema_100 = float(ema_100_val.item() if hasattr(ema_100_val, 'item') else ema_100_val)
         above_ema = current_close > ema_100
 
         result = {
