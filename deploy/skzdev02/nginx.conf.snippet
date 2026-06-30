@@ -1,0 +1,35 @@
+# Add this to your nginx config for premarket dashboard
+
+upstream premarket_backend {
+    server 127.0.0.1:8000;
+}
+
+server {
+    listen 3000;
+    server_name premarket.tailscale;
+
+    # Frontend static files
+    location / {
+        root /opt/premarket/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API proxy
+    location /api {
+        proxy_pass http://premarket_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # For polling/real-time updates
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://premarket_backend;
+    }
+}

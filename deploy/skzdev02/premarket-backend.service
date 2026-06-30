@@ -1,0 +1,26 @@
+[Unit]
+Description=Pre-Market Dashboard Backend
+After=network.target
+
+[Service]
+Type=simple
+User=premarket
+WorkingDirectory=/opt/premarket/backend
+Environment="PATH=/opt/premarket/venv/bin"
+EnvironmentFile=/opt/premarket/backend/.env
+
+ExecStart=/opt/premarket/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+Restart=always
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=true
+ReadOnlyPaths=/
+
+[Install]
+WantedBy=multi-user.target
