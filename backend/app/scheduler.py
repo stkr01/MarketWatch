@@ -12,19 +12,25 @@ scheduler = BackgroundScheduler()
 
 def run_market_scan():
     """Execute a full market scan (data collection + screening)"""
-    # TODO: Implement full scan pipeline
-    print(f"[{datetime.utcnow().isoformat()}] Market scan started")
-    logger.info("Market scan started")
+    try:
+        from app.pipeline import run_market_scan as pipeline_scan
+        result = pipeline_scan()
+        logger.info(f"Scan completed: {result['summary']}")
+    except Exception as e:
+        logger.error(f"Scan failed: {str(e)}", exc_info=True)
 
 
 def start_scheduler():
     """Start the APScheduler background job"""
     if scheduler.running:
+        logger.warning("Scheduler already running")
         return
+
+    logger.info("Starting scheduler...")
 
     # Schedule scan every 5 minutes during pre-market hours
     # Cron: minute hour day month day_of_week
-    # 0-30/5 4-9 * * 1-5 = every 5 minutes from 04:00-09:30, Mon-Fri
+    # 0-59/5 4-9 * * 1-5 = every 5 minutes from 04:00-09:30, Mon-Fri
     scheduler.add_job(
         run_market_scan,
         CronTrigger(minute="0-59/5", hour="4-9", day_of_week="mon-fri"),
@@ -34,7 +40,7 @@ def start_scheduler():
     )
 
     scheduler.start()
-    logger.info("Scheduler started")
+    logger.info("Scheduler started - scans every 5 minutes during pre-market hours (04:00-09:30 EST, Mon-Fri)")
 
 
 def stop_scheduler():
@@ -46,4 +52,13 @@ def stop_scheduler():
 
 def trigger_scan_now():
     """Manually trigger a scan immediately"""
+    logger.info("Manual scan triggered")
     run_market_scan()
+
+
+def get_next_run():
+    """Get the next scheduled run time"""
+    job = scheduler.get_job("market_scan")
+    if job:
+        return job.next_run_time
+    return None
