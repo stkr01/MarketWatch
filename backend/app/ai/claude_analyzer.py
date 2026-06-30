@@ -22,7 +22,7 @@ def analyze_stock_candidate(
     if not settings.ANTHROPIC_API_KEY:
         raise ValueError("ANTHROPIC_API_KEY not configured")
 
-    client = Anthropic()
+    client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
     # Build context for Claude
     gap_direction = "up" if market_data["gap_pct"] > 0 else "down"
