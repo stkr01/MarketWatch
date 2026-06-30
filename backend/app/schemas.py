@@ -14,8 +14,7 @@ class TickerResponse(TickerBase):
     id: int
     last_updated: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class ScanResultBase(BaseModel):
@@ -33,8 +32,7 @@ class ScanResultResponse(ScanResultBase):
     timestamp: datetime
     ticker: TickerResponse
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class ScanBase(BaseModel):
@@ -46,8 +44,7 @@ class ScanResponse(ScanBase):
     id: int
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class NewsItemBase(BaseModel):
@@ -62,8 +59,7 @@ class NewsItemResponse(NewsItemBase):
     ticker_id: int
     fetched_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class AIAnalysisBase(BaseModel):
@@ -77,8 +73,7 @@ class AIAnalysisResponse(AIAnalysisBase):
     requested_at: datetime
     prompt_version: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class CandidateResponse(BaseModel):
