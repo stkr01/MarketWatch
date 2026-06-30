@@ -29,19 +29,26 @@ export default function ScanStatusBar() {
 
   // Update countdown timer
   useEffect(() => {
-    if (!status?.next_scan) return
+    if (!status?.next_scan) {
+      setNextScanCountdown('Next scan pending...')
+      return
+    }
 
     const updateCountdown = () => {
-      const now = new Date()
-      const nextScan = new Date(status.next_scan)
-      const diff = nextScan.getTime() - now.getTime()
+      try {
+        const now = new Date()
+        const nextScan = new Date(status.next_scan!)
+        const diff = nextScan.getTime() - now.getTime()
 
-      if (diff > 0) {
-        const minutes = Math.floor(diff / 60000)
-        const seconds = Math.floor((diff % 60000) / 1000)
-        setNextScanCountdown(`${minutes}m ${seconds}s`)
-      } else {
-        setNextScanCountdown('Scanning soon...')
+        if (diff > 0) {
+          const minutes = Math.floor(diff / 60000)
+          const seconds = Math.floor((diff % 60000) / 1000)
+          setNextScanCountdown(`${minutes}m ${seconds}s`)
+        } else {
+          setNextScanCountdown('Scanning soon...')
+        }
+      } catch (e) {
+        setNextScanCountdown('Computing...')
       }
     }
 

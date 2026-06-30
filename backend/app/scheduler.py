@@ -67,7 +67,12 @@ def trigger_scan_now():
 
 def get_next_run():
     """Get the next scheduled run time"""
-    job = scheduler.get_job("market_scan")
-    if job:
-        return job.next_run_time
+    try:
+        job = scheduler.get_job("market_scan")
+        if job:
+            # APScheduler 3.x uses next_run_time
+            if hasattr(job, 'next_run_time'):
+                return job.next_run_time
+    except Exception as e:
+        logger.warning(f"Could not get next run time: {e}")
     return None
