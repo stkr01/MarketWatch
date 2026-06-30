@@ -15,8 +15,15 @@ export default function ScanStatusBar() {
   const { mutate: triggerScan, isPending } = useMutation({
     mutationFn: () => apiClient.post('/scan'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scan-status'] })
+      // Immediately refetch candidates, then again after 15 seconds
       queryClient.invalidateQueries({ queryKey: ['candidates'] })
+      queryClient.invalidateQueries({ queryKey: ['scan-status'] })
+
+      // Re-check after 15 seconds (scan usually takes 10-20s)
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['candidates'] })
+        queryClient.refetchQueries({ queryKey: ['scan-status'] })
+      }, 15000)
     }
   })
 

@@ -5,7 +5,9 @@ from app.db import get_db
 from app.models import Scan
 from app.schemas import ScanStatusResponse
 from app.scheduler import trigger_scan_now, get_next_run
+from app.pipeline import run_market_scan
 import logging
+import threading
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -25,7 +27,21 @@ async def get_scan_status(db: Session = Depends(get_db)):
 
 @router.post("/scan")
 async def trigger_scan(background_tasks: BackgroundTasks):
-    """Manually trigger a market scan in the background"""
-    logger.info("Manual scan requested via API")
-    background_tasks.add_task(trigger_scan_now)
-    return {"status": "scan started", "message": "Scan running in background"}
+    """Manually trigger a market scan immediately"""
+    logger.info("Manual scan requested via API - starting background task")
+
+    # Run in background thread so response returns immediately
+    def scan_task():
+        try:
+            result = run_market_scan()
+            logger.info(f"Manual scan completed: {result['summary']}")
+        except Exception as e:
+            logger.error(f"Manual scan failed: {e}", exc_info=True)
+
+    thread = threading.Thread(target=scan_task, daemon=True)
+    thread.start()
+
+    return {
+        "status": "scan started",
+        "message": "Market scan is running in background. Candidates will update in 10-30 seconds."
+    }

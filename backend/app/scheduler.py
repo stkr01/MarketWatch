@@ -28,19 +28,28 @@ def start_scheduler():
 
     logger.info("Starting scheduler...")
 
-    # Schedule scan every 5 minutes during pre-market hours
-    # Cron: minute hour day month day_of_week
-    # 0-59/5 4-9 * * 1-5 = every 5 minutes from 04:00-09:30, Mon-Fri
-    scheduler.add_job(
-        run_market_scan,
-        CronTrigger(minute="0-59/5", hour="4-9", day_of_week="mon-fri"),
-        id="market_scan",
-        name="Scheduled market scan",
-        replace_existing=True
-    )
-
-    scheduler.start()
-    logger.info("Scheduler started - scans every 5 minutes during pre-market hours (04:00-09:30 EST, Mon-Fri)")
+    if settings.DEBUG:
+        # DEV MODE: Every minute for testing
+        scheduler.add_job(
+            run_market_scan,
+            CronTrigger(minute="*"),  # Every minute
+            id="market_scan",
+            name="Scheduled market scan (DEV - every minute)",
+            replace_existing=True
+        )
+        logger.info("Scheduler started - DEV MODE: scans every minute")
+    else:
+        # PROD MODE: 5 minutes during pre-market hours
+        # Cron: minute hour day month day_of_week
+        # 0-59/5 4-9 * * 1-5 = every 5 minutes from 04:00-09:30, Mon-Fri
+        scheduler.add_job(
+            run_market_scan,
+            CronTrigger(minute="0-59/5", hour="4-9", day_of_week="mon-fri"),
+            id="market_scan",
+            name="Scheduled market scan",
+            replace_existing=True
+        )
+        logger.info("Scheduler started - PROD MODE: scans every 5 minutes during pre-market hours (04:00-09:30 EST, Mon-Fri)")
 
 
 def stop_scheduler():
