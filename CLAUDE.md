@@ -6,7 +6,15 @@ Pre-Market Swing Trading Dashboard — a live, real-time monitoring tool for swi
 
 **Goal**: Replace daily email reports with a live dashboard that continuously scans for swing trading catalysts (gap%, volume, EMA100, news).
 
-**MVP Status**: Phase 0 — Core architecture laid out. Fas 1–5 ready to implement.
+**MVP Status**: Fas 0–3 complete + dashboard enhancements (indicators, watchlist, outcome tracking, economic calendar, AI morning briefing). Fas 4 (deploy to skzdev02) pending. See `PROJECT_STATUS.md` for the current, detailed state and resume guide.
+
+**Implemented feature set** (beyond the original MVP):
+- Technical indicators: RSI(14), ATR(14)/ATR%, RVOL (in `market_data.py`, stored on `scan_results`)
+- DB-backed **watchlist** (`Ticker.is_active`) — scan universe is user-managed via `/api/watchlist`
+- **Candidate outcome tracking** — +1d/+1w returns, win rate (`candidate_outcomes`, `outcomes.py`)
+- **US economic calendar** — faireconomy/ForexFactory feed, today's USD events (`collectors/economic_calendar.py`)
+- **AI Morning Briefing** — Claude summary of candidates + calendar, cached daily (`ai/briefing.py`, `briefings` table)
+- Frontend redesign: glassmorphism theme, ET market clock + session status, Yahoo Finance ticker links
 
 ## Key Architecture Decisions
 
@@ -40,37 +48,42 @@ Pre-market window (04:00–09:30 EST, weekdays)
 APScheduler triggers every 5 minutes
     ↓
 collectors/
-  • market_data.py — yfinance: gap%, volume, EMA100
-  • news_feed.py — feedparser: recent news per ticker
-  • universe.py — Top 10 tickers
+  • market_data.py — yfinance: gap%, volume, EMA100, RSI(14), ATR(14), RVOL
+  • news_feed.py — Yahoo per-ticker RSS: recent news per ticker
+  • universe.py — DB watchlist (Ticker.is_active), seeded with 10 defaults
     ↓
-screeners/swing_rules.py — filter by rules
+screeners/swing_rules.py — filter by rules (gap/volume/news)
     ↓
-Database (scan_results, news_items)
+Database (scan_results incl. is_candidate, news_items, candidate_outcomes)
     ↓
 Frontend polls every 30–60s
     ↓
-User clicks "Analyze" → ai/claude_analyzer.py → Claude API
-    ↓
-Response cached in ai_analyses table
+User clicks "Analyze" → ai/claude_analyzer.py → Claude API → ai_analyses
+Morning briefing → ai/briefing.py (candidates + economic_calendar) → briefings
+Outcome tracking → outcomes.py evaluates +1d/+1w returns of past candidates
 ```
 
 ## Key Files & Paths
 
 ### Backend
-- `backend/app/main.py` — FastAPI entry point
+- `backend/app/main.py` — FastAPI entry point (create_all + `ensure_schema()` + `seed_default_watchlist()` on startup)
 - `backend/app/config.py` — Environment-based configuration
-- `backend/app/models.py` — SQLAlchemy ORM (Ticker, Scan, ScanResult, NewsItem, AIAnalysis)
-- `backend/app/routers/` — REST endpoints (candidates, stock, analyze, scan, news)
-- `backend/app/collectors/` — Data fetching (market_data, news_feed, universe)
+- `backend/app/db.py` — engine/session + `ensure_schema()` idempotent SQLite column migrations
+- `backend/app/models.py` — ORM (Ticker, Scan, ScanResult, NewsItem, AIAnalysis, CandidateOutcome, Briefing)
+- `backend/app/routers/` — REST endpoints (candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing)
+- `backend/app/collectors/` — Data fetching (market_data w/ indicators, news_feed w/ Yahoo per-ticker RSS, universe w/ DB watchlist, economic_calendar)
 - `backend/app/screeners/swing_rules.py` — Rule-based filtering
-- `backend/app/ai/claude_analyzer.py` — Claude integration
+- `backend/app/outcomes.py` — candidate outcome recording + return evaluation
+- `backend/app/ai/claude_analyzer.py` — per-ticker Claude analysis
+- `backend/app/ai/briefing.py` — Claude morning briefing generator
 - `backend/app/scheduler.py` — APScheduler job setup
 
 ### Frontend
-- `frontend/src/pages/Dashboard.tsx` — Main page
-- `frontend/src/components/` — CandidateTable, StockDetail, AIAnalysisPanel, ScanStatusBar
+- `frontend/src/pages/Dashboard.tsx` — Main page (header+clock, briefing, stat bar, 2-col grid)
+- `frontend/src/components/` — CandidateTable, StockDetail, AIAnalysisPanel, ScanStatusBar, MarketClock, EconomicCalendar, Watchlist, ScreenerPerformance, BriefingCard
+- `frontend/src/utils.ts` — `yahooUrl()`, `marketSession()`, `rsiZone()`
 - `frontend/src/api/client.ts` — Axios API client
+- `frontend/src/index.css` — redesigned dark/glassmorphism theme
 - `frontend/vite.config.ts` — Dev proxy to localhost:8000
 
 ### Deploy
@@ -139,32 +152,23 @@ ai_analyses(id, ticker_id, requested_at, prompt_version, response, usage_tokens,
 
 ## Next Steps for Implementation
 
+> Detailed, current state + resume guide live in `PROJECT_STATUS.md`.
+
 **Fas 0** (Setup) — ✓ Complete
-**Fas 1** (Data Pipeline) — Start here
-  - Confirm exact swing trading thresholds with Stefan
-  - Implement collectors (universe, market_data, news_feed)
-  - Implement screeners/swing_rules.py
-  - Write basic tests
+**Fas 1** (Data Pipeline) — ✓ Complete
+**Fas 2** (Backend API + Scheduler) — ✓ Complete
+**Fas 3** (Frontend Dashboard) — ✓ Complete
+**Enhancements** (indicators, watchlist, outcome tracking, economic calendar, AI briefing, redesign) — ✓ Complete (branch `feature/dashboard-enhancements`)
 
-**Fas 2** (Backend API + Scheduler)
-  - Implement all routers (candidates, stock, analyze, scan, news)
-  - APScheduler integration in scheduler.py
-  - Database write logic
-
-**Fas 3** (Frontend Dashboard)
-  - Complete React components
-  - Polling + polling interval tuning
-  - Error states + loading states
-
-**Fas 4** (Deploy)
+**Fas 4** (Deploy) — **NEXT / not started**
   - Set up systemd, nginx on skzdev02
-  - Configure deploy script
-  - Separate dev/prod instances
+  - Configure deploy script (`deploy/deploy.sh`)
+  - Separate dev/prod instances; prod `.env` with `DEBUG=false`
 
-**Fas 5** (Polish)
-  - GitHub Actions CI
-  - Error handling for rate limits, API failures
-  - README + deploy docs
+**Fas 5** (Polish / backlog)
+  - Real pre-market quotes (Finnhub/Polygon/Alpaca) — current gap is daily open vs prev close
+  - Alerts (Telegram/Discord), auto-analyze all candidates, structured AI output
+  - GitHub Actions CI; rate-limit/API error handling; README + deploy docs
 
 ## Important Notes
 

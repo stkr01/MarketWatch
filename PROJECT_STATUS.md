@@ -1,423 +1,194 @@
 # Pre-Market Swing Trading Dashboard - Project Status
 
-**Last Updated:** 2026-06-30  
-**Status:** Fas 0-3 COMPLETE ✅ - Ready for Fas 4 Deployment
+**Last Updated:** 2026-07-02
+**Status:** Fas 0-3 + Dashboard Enhancements COMPLETE ✅ — Fas 4 (deploy) still pending
+**Active branch:** `feature/dashboard-enhancements` (commit `5cc95e3`, not yet merged to `main`/`master`)
+
+---
+
+## ⚡ Resume Tomorrow (read this first)
+
+**Start backend** (PowerShell window 1):
+```powershell
+cd C:\Data\Pre-Market\backend
+.\venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --port 8000
+```
+
+**Start frontend** (PowerShell window 2):
+```powershell
+cd C:\Data\Pre-Market\frontend
+npm run dev
+```
+
+Open **http://localhost:5173** (Vite jumps to 5174 if 5173 is busy).
+
+Notes:
+- `backend/.env` has `DEBUG=true` → scheduler scans **every minute** (auto-populates candidates; no need to click "Scan Now"). Set `DEBUG=false` for the prod-style schedule (every 5 min, 04:00–09:30 ET, Mon–Fri).
+- DB migrations run automatically on startup (`ensure_schema()`), so the existing `data/premarket.db` is patched in place — no data loss.
+- All local testing passed: `python test_pipeline_local.py` → 7/7; `npm run build` → clean.
+
+**Git:** work is committed on `feature/dashboard-enhancements`. Not pushed, not merged. To continue: `git checkout feature/dashboard-enhancements`.
 
 ---
 
 ## 📊 Project Overview
 
-**Goal:** Live dashboard for swing trading (1-30 day holds) on US equities, replacing daily email reports.
-
-**Target Server:** skzdev02 (Azure VM, private Tailscale network)  
-**Architecture:** Python FastAPI backend + React frontend + SQLite database  
-**Key Feature:** Real-time market scanning + Claude AI on-demand analysis
-
----
-
-## ✅ Completed Work
-
-### Fas 0: Project Setup (DONE)
-- ✅ GitHub repo initialized (`C:\Data\Pre-Market`)
-- ✅ Backend structure: FastAPI + SQLAlchemy + SQLite
-- ✅ Frontend structure: React + Vite + TypeScript
-- ✅ Database schema (5 tables: tickers, scans, scan_results, news_items, ai_analyses)
-- ✅ Environment configuration (dev/prod separation via .env)
-- ✅ Initial commits to git
-
-### Fas 1: Data Pipeline (DONE)
-- ✅ `collectors/universe.py` - Top 10 NASDAQ/NYSE tickers
-- ✅ `collectors/market_data.py` - yfinance gap%, volume, EMA100 (FIXED pandas Series issue)
-- ✅ `collectors/news_feed.py` - feedparser RSS feeds (CNBC, MarketWatch, Yahoo)
-- ✅ `screeners/swing_rules.py` - Gap%, volume, EMA100, news catalyst filtering
-- ✅ `pipeline.py` - End-to-end scan orchestration
-- ✅ `scheduler.py` - APScheduler (every minute in dev, 5-min pre-market in prod)
-- ✅ `test_pipeline_local.py` - All 7 tests PASSING
-
-### Fas 2: Backend API (DONE)
-- ✅ FastAPI app with CORS middleware
-- ✅ 5 REST endpoints fully implemented:
-  - `GET /api/candidates` - Current scan candidates
-  - `GET /api/stock/{ticker}` - Stock metadata
-  - `GET /api/news/{ticker}` - Recent news
-  - `POST /api/stock/{ticker}/analyze` - Claude on-demand analysis
-  - `POST /api/scan` - Manual scan trigger (background thread)
-  - `GET /api/scan/status` - Scan status + next run countdown
-- ✅ Database integration (SQLite write operations)
-- ✅ Claude API integration (Anthropic SDK)
-- ✅ Scheduler startup/shutdown hooks in main.py
-- ✅ Error handling & logging throughout
-
-### Fas 3: React Frontend (DONE)
-- ✅ Professional dark-themed dashboard
-- ✅ Real-time candidate table (30s polling)
-  - Color-coded gap% (🟢 up, 🔴 down)
-  - Volume metrics with 💚 highlighting
-  - EMA100 position (Above/Below) with indicator
-  - News presence indicator 📰
-- ✅ Stock detail view with news feed
-- ✅ Claude AI analysis panel with caching & refresh
-- ✅ Scan status bar with countdown timer
-- ✅ Manual scan trigger with visual feedback
-- ✅ React Query for server state management
-- ✅ Axios API client with error handling
-- ✅ Responsive design (mobile-friendly)
+**Goal:** Live dashboard for swing trading (1–30 day holds) on US equities, replacing daily email reports.
+**Target Server:** skzdev02 (Azure VM, private Tailscale network)
+**Architecture:** Python FastAPI backend + React frontend + SQLite database
+**Key Feature:** Real-time market scanning + Claude AI on-demand analysis + AI morning briefing
 
 ---
 
-## 🔧 Tech Stack (Final)
+## 🆕 Session 2026-07-01/02 — What we added
 
-### Backend
-- **Language:** Python 3.10+
-- **Framework:** FastAPI 0.104+
-- **Server:** Uvicorn
-- **Database:** SQLite (via SQLAlchemy ORM)
-- **Migrations:** Alembic
-- **Data Fetching:**
-  - yfinance 0.2.32 (market data)
-  - feedparser 6.0.10 (RSS news)
-  - pandas 3.0+ (data manipulation)
-- **Scheduling:** APScheduler 3.11
-- **AI:** Anthropic Python SDK 0.114+ (Claude API)
-- **Testing:** pytest
+### Backend correctness fixes
+1. **Screened candidates now persist & filter correctly** — added `ScanResult.is_candidate`; pipeline flags it; `/api/candidates` filters on it. (Previously the endpoint returned *all* scanned tickers, not just those passing the rules.)
+2. **News feed rewritten** — now uses Yahoo Finance **per-ticker RSS** (`.../rss/2.0/headline?s=SYMBOL`) instead of fragile substring matching in generic feeds. Reliable catalyst detection (~20 items/ticker vs ~0 before).
+3. **EMA100 data window** widened `3mo → 1y` (100-day EMA needs >100 trading days).
+4. **Claude model** updated `claude-opus-4-1 → claude-opus-4-8`.
+5. **Lightweight migrations** — `db.ensure_schema()` adds new columns to the SQLite dev DB idempotently on startup.
 
-### Frontend
-- **Framework:** React 18
-- **Build:** Vite 5
-- **Language:** TypeScript
-- **HTTP:** Axios
-- **State:** React Query (TanStack Query v5)
-- **Routing:** React Router DOM v6
-- **Styling:** Custom CSS (dark theme)
+### New features (all 4 requested, built + verified)
+- **A · Technical indicators** — RSI(14, Wilder), ATR(14) + ATR%, RVOL computed in `market_data.py`, stored on `scan_results`, surfaced in the candidate table (RSI column, RVOL bar) and a new metric strip in the detail view.
+- **B · Watchlist** — DB-backed scan universe (`Ticker.is_active`). Seeded with the default 10. Add/remove via `/api/watchlist` (yfinance-validated on add). Sidebar UI with chips.
+- **C · Candidate outcome tracking** — `candidate_outcomes` table records each flagged candidate; lazy+throttled evaluation computes **+1 day / +1 week** returns (trading-day based). `/api/outcomes` returns win rate + avg return. "Screener Performance" sidebar panel.
+- **D · AI Morning Briefing** — `ai/briefing.py` has Claude summarize candidates + economic calendar into a morning game plan. Cached one-per-day in `briefings`. `/api/briefing` (GET cached) + `/api/briefing/generate` (POST). Card at top of dashboard.
 
-### Infrastructure
-- **Deployment:** systemd (Linux units on skzdev02)
-- **Reverse Proxy:** nginx
-- **Network:** Private Tailscale network
-- **Git:** GitHub (dev/main branch strategy)
+### Also new
+- **US Economic Calendar** — `collectors/economic_calendar.py` pulls the free faireconomy/ForexFactory weekly JSON, filters USD + today (US/Eastern), 15-min cache. `/api/economic-calendar`. Sidebar panel with impact color-coding + time.
+- **Frontend redesign** — glassmorphism dark theme, live ET market clock + session pill (Pre-Market/Open/After Hours/Closed), stat tiles, richer table, **Yahoo Finance links** on every ticker (`finance.yahoo.com/quote/SYMBOL`), spinners/animations.
 
 ---
 
-## 🚀 How to Run Locally
+## ✅ Completed Work (cumulative)
 
-### Backend Setup
-```bash
-cd C:\Data\Pre-Market\backend
+- **Fas 0** Project setup — FastAPI + SQLAlchemy + SQLite, React + Vite + TS ✅
+- **Fas 1** Data pipeline — collectors, screeners, `pipeline.py`, `scheduler.py` ✅
+- **Fas 2** Backend API — all REST endpoints, DB writes, Claude integration ✅
+- **Fas 3** React frontend — dashboard, polling, components ✅
+- **Enhancements (this session)** — indicators, watchlist, outcome tracking, economic calendar, AI briefing, redesign ✅
+- **Fas 4** Deploy to skzdev02 — **NOT STARTED** (files scaffolded in `deploy/`)
 
-# Create venv (first time only)
-python -m venv venv
-.\venv\Scripts\activate
+---
 
-# Install dependencies (first time only)
-pip install -r requirements.txt
+## 🔌 API Endpoints (current)
 
-# Create .env with API key
-cp .env.example .env
-# Add: ANTHROPIC_API_KEY=sk-ant-api03-...
+| Method | Path | Purpose |
+|---|---|---|
+| GET  | `/health` | Health check |
+| GET  | `/api/candidates` | Screened candidates from latest scan (filtered by `is_candidate`) |
+| GET  | `/api/stock/{ticker}` | Ticker metadata |
+| GET  | `/api/stock/{ticker}/scan` | Latest scan metrics (gap, RVOL, RSI, ATR, EMA) — **new** |
+| GET  | `/api/news/{ticker}` | Recent news |
+| POST | `/api/stock/{ticker}/analyze` | Claude on-demand analysis |
+| POST | `/api/scan` | Manual scan trigger (background thread) |
+| GET  | `/api/scan/status` | Scan status + next run |
+| GET  | `/api/economic-calendar` | Today's USD economic events — **new** |
+| GET/POST/DELETE | `/api/watchlist` (+`/{symbol}`) | Manage scan universe — **new** |
+| GET  | `/api/outcomes` | Screener performance (win rate, returns) — **new** |
+| GET  | `/api/briefing` · POST `/api/briefing/generate` | AI morning briefing — **new** |
 
-# Start server
-uvicorn app.main:app --reload --port 8000
+---
+
+## 💾 Database Schema (SQLite)
+
+```sql
+tickers(id, symbol, name, exchange, market_cap, is_active*, last_updated)
+scans(id, timestamp, status, candidate_count)
+scan_results(id, scan_id, ticker_id, gap_pct, volume, volume_avg_20, rvol*,
+             price, ema_100, above_ema_100, rsi_14*, atr_14*, atr_pct*,
+             has_news, is_candidate*, timestamp)
+news_items(id, ticker_id, title, source, url, summary, published_at, fetched_at)
+ai_analyses(id, ticker_id, requested_at, prompt_version, response, usage_tokens, timestamp)
+candidate_outcomes*(id, ticker_id, scan_id, symbol, flagged_at, entry_price,
+             price_1d, return_1d_pct, evaluated_1d,
+             price_1w, return_1w_pct, evaluated_1w)
+briefings*(id, date, content, generated_at, usage_tokens)
 ```
-
-**Logs show:** Data collection → screening → candidate matches ✓
-
-### Frontend Setup
-```bash
-cd C:\Data\Pre-Market\frontend
-
-# Install dependencies (first time only)
-npm install
-
-# Start dev server
-npm run dev
-```
-
-**Dashboard at:** http://localhost:5173
-
-### Full Flow Test
-1. Open dashboard
-2. Click "🔄 Scan Now"
-3. Wait 10-20 seconds
-4. Candidates appear in table
-5. Click "View" → see stock detail + news
-6. Click "🤖 Analyze" → Claude AI analysis loads
+`*` = added this session (auto-migrated via `ensure_schema()`).
 
 ---
 
-## 📁 Project Structure
+## 📁 Key Files
 
-```
-C:\Data\Pre-Market\
-├── backend/
-│   ├── app/
-│   │   ├── main.py                 # FastAPI entry
-│   │   ├── config.py               # Env-based config
-│   │   ├── db.py                   # SQLAlchemy setup
-│   │   ├── models.py               # ORM models (5 tables)
-│   │   ├── schemas.py              # Pydantic models
-│   │   ├── pipeline.py             # Scan orchestration
-│   │   ├── scheduler.py            # APScheduler jobs
-│   │   ├── routers/                # API endpoints (5 files)
-│   │   ├── collectors/             # Data fetching (3 files)
-│   │   ├── screeners/              # swing_rules.py
-│   │   └── ai/                     # claude_analyzer.py
-│   ├── tests/
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── test_pipeline_local.py      # 7/7 tests PASSING
-├── frontend/
-│   ├── src/
-│   │   ├── pages/                  # Dashboard.tsx
-│   │   ├── components/             # 4 UI components
-│   │   ├── api/                    # Axios client
-│   │   ├── App.tsx
-│   │   ├── main.tsx
-│   │   └── index.css               # Dark theme
-│   ├── index.html
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   ├── package.json
-│   └── .env.example
-├── deploy/
-│   ├── skzdev02/
-│   │   ├── premarket-backend.service
-│   │   ├── nginx.conf.snippet
-│   │   └── DEPLOY.md
-│   └── deploy.sh
-├── .github/workflows/              # CI/CD (placeholder)
-├── .gitignore
-├── CLAUDE.md                       # AI context doc
-├── README.md                       # Feature overview
-├── LOCAL_DEV_GUIDE.md              # Dev setup guide
-├── PROJECT_STATUS.md               # THIS FILE
-└── .git/                           # Git repo
+### Backend (`backend/app/`)
+- `main.py` — FastAPI entry; `create_all` + `ensure_schema()` + `seed_default_watchlist()` on startup
+- `config.py` — env-based config (thresholds, model, ports)
+- `db.py` — engine, session, **`ensure_schema()` migrations**
+- `models.py` — ORM (Ticker, Scan, ScanResult, NewsItem, AIAnalysis, **CandidateOutcome**, **Briefing**)
+- `schemas.py` — Pydantic response models
+- `pipeline.py` — scan orchestration (+ records candidate outcomes)
+- `scheduler.py` — APScheduler (every min in DEBUG, 5-min pre-market in prod)
+- `outcomes.py` — **candidate outcome record + evaluate service**
+- `collectors/` — `universe.py` (DB watchlist + seed), `market_data.py` (yfinance + **RSI/ATR/RVOL**), `news_feed.py` (**Yahoo per-ticker RSS**), **`economic_calendar.py`**
+- `screeners/swing_rules.py` — gap/volume/news filtering
+- `ai/` — `claude_analyzer.py` (per-ticker), **`briefing.py`** (morning briefing)
+- `routers/` — candidates, stock, analyze, scan, news, **economic**, **watchlist**, **outcomes**, **briefing**
 
-```
+### Frontend (`frontend/src/`)
+- `pages/Dashboard.tsx` — layout (header+clock, briefing, stat bar, 2-col grid, detail)
+- `components/` — CandidateTable, StockDetail, ScanStatusBar, AIAnalysisPanel, **MarketClock**, **EconomicCalendar**, **Watchlist**, **ScreenerPerformance**, **BriefingCard**
+- `api/client.ts` — axios client (`/api` proxied to :8000)
+- `utils.ts` — **`yahooUrl()`, `marketSession()`, `rsiZone()`**
+- `index.css` — redesigned dark/glassmorphism theme
 
 ---
 
-## 🎯 Swing Trading Rules (Current)
+## 🎯 Swing Trading Rules (config.py / .env)
 
-**Screening Criteria:**
-- **Gap %:** ±2.0% (configurable in `config.py`)
-- **Volume:** 1.5x of 20-day average (configurable)
-- **EMA100:** Trend indicator (above = uptrend, below = downtrend)
-- **News:** Must have ≥1 recent news item (last 48 hours) - REQUIRED
-
-**Tickers:** Top 10 NASDAQ/NYSE (dev mode, can scale to 500)
-
-**Scan Frequency:**
-- Dev: Every minute (APScheduler)
-- Prod: Every 5 minutes, 04:00–09:30 EST, Mon-Fri
+- **Gap %:** ±2.0% (`GAP_THRESHOLD_PERCENT`)
+- **Volume:** 1.5× 20-day avg (`VOLUME_MULTIPLIER`) — this is effectively the RVOL filter
+- **News:** ≥1 recent item, last 48h (`NEWS_LOOKBACK_HOURS`) — **required catalyst**
+- **EMA100 / RSI / ATR:** informational (shown, not hard filters)
+- **Universe:** DB watchlist (`is_active`), seeded with 10 liquid names
 
 ---
 
-## 🔄 Data Flow
+## 🐛 Known Limitations / Backlog
 
-```
-Pre-market window
-    ↓
-APScheduler triggers (every 1 min dev / 5 min prod)
-    ↓
-pipeline.py: run_market_scan()
-    ├── Collectors: yfinance, feedparser
-    ├── Screeners: swing_rules filtering
-    ├── Database: save scan_results, news_items
-    └── Return candidates list
-    ↓
-Frontend polls /api/candidates (every 30s)
-    ↓
-User sees updated dashboard
-    ↓
-User clicks "Analyze" → POST /api/stock/{ticker}/analyze
-    ↓
-Claude API → analysis cached in DB
-    ↓
-Frontend displays Claude response
-```
+**Limitations**
+- **Gap is not live pre-market** — it's today's daily open vs yesterday's close (yfinance daily bars). Real pre-market quotes need a source like Finnhub/Polygon/Alpaca.
+- Outcome returns are approximate (daily-close based, trading-day offsets).
+- `/api/scan/status` `is_running` is hardcoded `false`.
+- CORS `allow_origins=["*"]` + `allow_credentials=True` is technically invalid (harmless now, no cookies).
+- Deprecations: `datetime.utcnow()`, Pydantic `from_orm()` — still work, emit warnings.
+- Dev DEBUG mode scans every minute → yfinance rate-limit risk + manual scan can overlap scheduler.
+
+**Feature backlog (brainstormed, not yet built)**
+- Push/Telegram/Discord alerts on strong candidates
+- Auto-analyze all candidates (not just on-demand)
+- Structured AI output (rating + entry/stop/target as fields)
+- News sentiment scoring; earnings-date proximity; more sources
+- Sparklines / candlestick charts; sector heatmap
+- Scan history view + real scan status; WebSockets instead of polling
+- Trade journal; paper-trading (Alpaca); JWT auth for off-Tailscale access
 
 ---
 
-## 🐛 Known Issues / Fixed
+## 🚀 Next Steps
 
-### FIXED ✅
-1. ~~APScheduler next_run_time attribute error~~ → Added graceful handling
-2. ~~Pandas Series scalar extraction error~~ → Robust .item() conversion
-3. ~~Scan endpoint not triggering~~ → Background thread implementation
-4. ~~Frontend not refetching after scan~~ → Auto-refetch after 15s
+**Option 1 — Fas 4 Deploy to skzdev02** (original plan)
+- systemd unit + nginx reverse proxy + `deploy/deploy.sh` (scaffolds exist in `deploy/`)
+- Set prod `.env` (`DEBUG=false`, real `ANTHROPIC_API_KEY`), data dir `/opt/premarket/data/`
+- Est. 1–2 h
 
-### Current Limitations
-- No historical tracking of scan performance
-- News feeds limited to CNBC, MarketWatch, Yahoo (can expand)
-- No backtesting interface (planned for future)
-- SQLite only (scales to ~500 stocks, then consider PostgreSQL)
-
----
-
-## 📝 Swing Trading Rules Customization
-
-To adjust screening rules, edit `backend/app/config.py`:
-
-```python
-GAP_THRESHOLD_PERCENT = 2.0        # Change to 1.5 or 3.0
-VOLUME_MULTIPLIER = 1.5            # Change to 2.0 for stricter filtering
-NEWS_LOOKBACK_HOURS = 48           # Adjust news recency window
-```
-
-Or override via `.env`:
-```
-GAP_THRESHOLD_PERCENT=2.5
-VOLUME_MULTIPLIER=1.8
-```
-
----
-
-## 🚀 Next Steps: Fas 4 - Deploy to skzdev02
-
-### What needs to be done:
-1. **systemd service unit** - Run backend as daemon
-2. **nginx config** - Reverse proxy + static frontend serving
-3. **deploy.sh automation** - Git pull → pip install → build → restart
-4. **Tailscale access** - Already set up on skzdev02
-5. **Environment variables** - Set .env on production server
-6. **Database persistence** - SQLite file location `/opt/premarket/data/`
-
-### Files ready:
-- `deploy/skzdev02/premarket-backend.service` ✓
-- `deploy/skzdev02/nginx.conf.snippet` ✓
-- `deploy/deploy.sh` ✓
-
-### Timeline estimate:
-- ~30 min to set up systemd unit
-- ~20 min to configure nginx
-- ~10 min to test end-to-end on server
-
----
-
-## 📚 Documentation Files
-
-- **CLAUDE.md** - Full AI context (architecture, decisions, open questions)
-- **README.md** - Feature overview & quick start
-- **LOCAL_DEV_GUIDE.md** - Detailed local development instructions
-- **PROJECT_STATUS.md** - THIS FILE (current progress & next steps)
-- **.github/workflows/ci.yml** - CI/CD pipeline (placeholder)
+**Option 2 — Merge & keep building features**
+- Merge `feature/dashboard-enhancements` → `main`/`master`
+- Pick from the backlog above (alerts and real pre-market data are highest value)
 
 ---
 
 ## 🔐 Security Notes
-
-- **API Keys:** Never commit .env files (in .gitignore)
-- **CORS:** Set to "*" for local dev, restrict for production
-- **Auth:** No authentication for MVP (Tailscale network is private)
-- **HTTPS:** nginx on skzdev02 will handle TLS
-
----
-
-## 💾 Database
-
-### Current Tables
-```sql
-tickers(id, symbol, name, exchange, market_cap, last_updated)
-scans(id, timestamp, status, candidate_count)
-scan_results(id, scan_id, ticker_id, gap_pct, volume, ema_100, above_ema_100, has_news, timestamp)
-news_items(id, ticker_id, title, source, url, published_at, fetched_at)
-ai_analyses(id, ticker_id, requested_at, prompt_version, response, usage_tokens, timestamp)
-```
-
-### View Database
-```bash
-cd backend
-.\venv\Scripts\python -c "
-from app.db import SessionLocal
-from app.models import Scan
-db = SessionLocal()
-scans = db.query(Scan).order_by(Scan.id.desc()).limit(5).all()
-for s in scans:
-    print(f'Scan {s.id}: {s.candidate_count} candidates at {s.timestamp}')
-"
-```
-
----
-
-## 🎓 How to Continue Later
-
-1. **Clone repo:**
-   ```bash
-   cd C:\Data\Pre-Market
-   git status  # Check branch
-   ```
-
-2. **Read this file** for context
-
-3. **Start backend:**
-   ```bash
-   cd backend
-   .\venv\Scripts\activate
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-4. **Start frontend:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
-5. **Test:**
-   - Dashboard: http://localhost:5173
-   - Click "🔄 Scan Now"
-   - Verify candidates appear
-
-6. **Next:** Deploy to skzdev02 (Fas 4)
-
----
-
-## 📊 Git Commits (Recent)
-
-```
-eb4a185 - Fix: Robust pandas value extraction from yfinance data
-4d24cc9 - Fix: Pandas Series scalar extraction in market_data.py
-97aa7d8 - Fix: APScheduler next_run_time attribute error
-e34aeab - Fix: Improve scan triggering and debug mode
-7ef585c - Add Local Development Guide for testing Fas 2-3
-c92c940 - Fas 2-3: Complete backend & frontend implementation
-526db3e - Fas 1: Complete - all pipeline tests passing (7/7)
-86ab06c - Fas 1: Data pipeline implementation - collectors, screeners, API endpoints
-35ea481 - Fas 0: Initial project setup - FastAPI backend + React frontend skeleton
-```
-
----
-
-## 🤝 Team Notes
-
-- **Developer:** Stefan Krantz
-- **Developed with:** Claude Haiku (AI Assistant)
-- **Development Duration:** ~6 hours (Fas 0-3)
-- **Next Session Goal:** Deploy Fas 4 to skzdev02 (est. 1-2 hours)
+- `.env` is gitignored (verified not tracked); never commit API keys.
+- No auth for MVP (Tailscale private network). Add JWT before any public exposure.
 
 ---
 
 ## 📞 Quick Troubleshooting
-
-**Backend won't start?**
-- Check Python version: `python --version` (need 3.10+)
-- Check venv activated: `pip list | findstr fastapi`
-- Verify .env exists with ANTHROPIC_API_KEY
-
-**Frontend shows "Cannot POST /api/scan"?**
-- Backend not running? Start it first
-- Check http://localhost:8000/health returns `{"status": "ok"}`
-
-**No candidates after scan?**
-- Check backend logs for data fetching errors
-- Market data might not match screening rules
-- Try lowering GAP_THRESHOLD_PERCENT in config.py
-
-**Claude analysis fails?**
-- Verify ANTHROPIC_API_KEY is valid
-- Check API rate limits at console.anthropic.com
-- Verify news data exists for the stock
-
----
-
-**Status:** Ready for Fas 4 deployment. All local testing complete. ✅
-
+- **Port 8000 in use** → a backend is already running (likely your `--reload` server, which auto-picks up code changes). Check `curl http://localhost:8000/health`.
+- **Frontend on 5174** → 5173 was busy; both work.
+- **No candidates** → check backend logs; try lowering `GAP_THRESHOLD_PERCENT`; ensure a scan ran.
+- **Briefing/analysis fails** → verify `ANTHROPIC_API_KEY` in `backend/.env`.
+- **New column errors** → `ensure_schema()` runs on startup; if bypassing `main.py`, call it manually (see `test_pipeline_local.py`).
