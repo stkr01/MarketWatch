@@ -4,8 +4,9 @@ from contextlib import asynccontextmanager
 import logging
 
 from app.config import settings
-from app.db import Base, engine
-from app.routers import candidates, stock, analyze, scan, news
+from app.db import Base, engine, ensure_schema
+from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing
+from app.collectors.universe import seed_default_watchlist
 from app.scheduler import start_scheduler, stop_scheduler
 
 # Configure logging
@@ -16,8 +17,10 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Create tables
+# Create tables and apply lightweight migrations
 Base.metadata.create_all(bind=engine)
+ensure_schema()
+seed_default_watchlist()
 
 
 @asynccontextmanager
@@ -60,6 +63,10 @@ app.include_router(stock.router, prefix="/api", tags=["stock"])
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
 app.include_router(scan.router, prefix="/api", tags=["scan"])
 app.include_router(news.router, prefix="/api", tags=["news"])
+app.include_router(economic.router, prefix="/api", tags=["economic"])
+app.include_router(watchlist.router, prefix="/api", tags=["watchlist"])
+app.include_router(outcomes.router, prefix="/api", tags=["outcomes"])
+app.include_router(briefing.router, prefix="/api", tags=["briefing"])
 
 
 @app.get("/health")

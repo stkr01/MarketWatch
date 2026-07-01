@@ -12,6 +12,7 @@ class Ticker(Base):
     name = Column(String)
     exchange = Column(String)
     market_cap = Column(Float, nullable=True)
+    is_active = Column(Boolean, default=True, index=True)  # In the scan watchlist
     last_updated = Column(DateTime, default=datetime.utcnow)
 
     scan_results = relationship("ScanResult", back_populates="ticker")
@@ -40,11 +41,16 @@ class ScanResult(Base):
     gap_pct = Column(Float)
     volume = Column(Float)
     volume_avg_20 = Column(Float, nullable=True)
+    rvol = Column(Float, nullable=True)
     price = Column(Float)
     ema_100 = Column(Float, nullable=True)
     above_ema_100 = Column(Boolean, nullable=True)
+    rsi_14 = Column(Float, nullable=True)
+    atr_14 = Column(Float, nullable=True)
+    atr_pct = Column(Float, nullable=True)
 
     has_news = Column(Boolean, default=False)
+    is_candidate = Column(Boolean, default=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
     scan = relationship("Scan", back_populates="scan_results")
@@ -65,6 +71,40 @@ class NewsItem(Base):
     fetched_at = Column(DateTime, default=datetime.utcnow)
 
     ticker = relationship("Ticker", back_populates="news_items")
+
+
+class CandidateOutcome(Base):
+    """Tracks a stock that passed screening, to measure how it performed."""
+    __tablename__ = "candidate_outcomes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticker_id = Column(Integer, ForeignKey("tickers.id"))
+    scan_id = Column(Integer, ForeignKey("scans.id"), nullable=True)
+    symbol = Column(String, index=True)
+
+    flagged_at = Column(DateTime, default=datetime.utcnow, index=True)
+    entry_price = Column(Float)  # Price when flagged as candidate
+
+    price_1d = Column(Float, nullable=True)
+    return_1d_pct = Column(Float, nullable=True)
+    evaluated_1d = Column(Boolean, default=False)
+
+    price_1w = Column(Float, nullable=True)
+    return_1w_pct = Column(Float, nullable=True)
+    evaluated_1w = Column(Boolean, default=False)
+
+    ticker = relationship("Ticker")
+
+
+class Briefing(Base):
+    """Cached Claude-generated morning briefing (one per ET calendar day)."""
+    __tablename__ = "briefings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String, unique=True, index=True)  # YYYY-MM-DD (US/Eastern)
+    content = Column(Text)
+    generated_at = Column(DateTime, default=datetime.utcnow)
+    usage_tokens = Column(Integer, nullable=True)
 
 
 class AIAnalysis(Base):

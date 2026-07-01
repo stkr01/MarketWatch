@@ -55,7 +55,7 @@ Focus on:
 Be concise and actionable."""
 
     response = client.messages.create(
-        model="claude-opus-4-1",
+        model="claude-opus-4-8",
         max_tokens=300,
         messages=[
             {"role": "user", "content": prompt}

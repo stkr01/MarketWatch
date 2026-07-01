@@ -8,6 +8,7 @@ from app.collectors.universe import get_ticker_universe
 from app.collectors.market_data import get_bulk_market_data
 from app.collectors.news_feed import get_bulk_news
 from app.screeners.swing_rules import screen_candidates
+from app.outcomes import record_candidate_outcomes
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ def run_market_scan() -> dict:
         db.flush()  # Get scan ID
 
         # Save scan results
+        candidate_set = set(candidates)
         for data in market_data_list:
             ticker_obj = db.query(Ticker).filter(Ticker.symbol == data["ticker"]).first()
             if ticker_obj:
@@ -91,10 +93,15 @@ def run_market_scan() -> dict:
                     gap_pct=data["gap_pct"],
                     volume=data["volume"],
                     volume_avg_20=data["volume_avg_20"],
+                    rvol=data.get("rvol"),
                     price=data["price"],
                     ema_100=data["ema_100"],
                     above_ema_100=data["above_ema_100"],
+                    rsi_14=data.get("rsi_14"),
+                    atr_14=data.get("atr_14"),
+                    atr_pct=data.get("atr_pct"),
                     has_news=has_news,
+                    is_candidate=data["ticker"] in candidate_set,
                     timestamp=data["timestamp"]
                 )
                 db.add(scan_result)
@@ -122,6 +129,10 @@ def run_market_scan() -> dict:
 
         db.commit()
         logger.info(f"  → Scan {scan.id} saved to database")
+
+        # Track candidate outcomes (dedup per day) for performance analytics
+        candidate_data = [d for d in market_data_list if d["ticker"] in candidate_set]
+        record_candidate_outcomes(db, scan.id, candidate_data)
 
         # Summary
         elapsed = (datetime.utcnow() - start_time).total_seconds()

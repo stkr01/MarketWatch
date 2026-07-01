@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
+import { yahooUrl, rsiZone } from '../utils'
 
 interface Props {
   onSelectTicker: (ticker: string) => void
@@ -10,89 +11,94 @@ export default function CandidateTable({ onSelectTicker, selectedTicker }: Props
   const { data: candidates = [], isLoading, error } = useQuery({
     queryKey: ['candidates'],
     queryFn: () => apiClient.get('/candidates').then(r => r.data),
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 30000,
   })
 
-  if (isLoading) return <div className="loading">⟳ Loading candidates...</div>
+  if (isLoading) return <div className="loading"><span className="spinner" />Loading candidates…</div>
+  if (error) return <div className="empty" style={{ color: '#fda4af' }}>Error loading candidates</div>
 
-  if (error) return <div className="loading" style={{ color: '#dc2626' }}>Error loading candidates</div>
+  if (candidates.length === 0) {
+    return (
+      <div className="empty">
+        No candidates match the criteria yet.
+        <small>Click “Scan Now” to trigger a market scan</small>
+      </div>
+    )
+  }
 
   return (
-    <div className="candidate-table">
-      {candidates.length === 0 ? (
-        <div className="loading">
-          <p>No candidates found matching criteria yet.</p>
-          <small style={{ marginTop: '1rem', display: 'block' }}>Click "Scan Now" to trigger a market scan</small>
-        </div>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th style={{ textAlign: 'right' }}>Gap %</th>
-              <th style={{ textAlign: 'right' }}>Volume</th>
-              <th style={{ textAlign: 'center' }}>EMA100</th>
-              <th style={{ textAlign: 'center' }}>News</th>
-              <th style={{ textAlign: 'center' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {candidates.map((candidate: any) => {
-              const isSelected = selectedTicker === candidate.ticker.symbol
-              const gapPct = candidate.scan_result.gap_pct
-              const gapColor = gapPct > 0 ? '#16a34a' : '#dc2626'
+    <table className="data-table">
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th className="num">Gap %</th>
+          <th className="num">Price</th>
+          <th className="num">Volume</th>
+          <th className="num">RSI</th>
+          <th className="center">EMA100</th>
+          <th className="center">News</th>
+        </tr>
+      </thead>
+      <tbody>
+        {candidates.map((c: any) => {
+          const sr = c.scan_result
+          const isSelected = selectedTicker === c.ticker.symbol
+          const up = sr.gap_pct > 0
+          const ratio = sr.volume_avg_20 ? sr.volume / sr.volume_avg_20 : null
+          const fill = ratio ? Math.min(ratio / 3, 1) * 100 : 0
 
-              return (
-                <tr key={candidate.ticker.id} style={{
-                  background: isSelected ? 'rgba(37, 99, 235, 0.1)' : undefined,
-                  borderLeft: isSelected ? '3px solid #2563eb' : 'none'
-                }}>
-                  <td style={{ fontWeight: 600, color: '#60a5fa' }}>
-                    {candidate.ticker.symbol}
-                  </td>
-                  <td style={{ textAlign: 'right', color: gapColor, fontWeight: 500 }}>
-                    {gapPct > 0 ? '+' : ''}{gapPct.toFixed(2)}%
-                  </td>
-                  <td style={{ textAlign: 'right', color: '#a1e34a' }}>
-                    {(candidate.scan_result.volume / 1e6).toFixed(1)}M
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem',
-                      background: candidate.scan_result.above_ema_100 ? 'rgba(22, 163, 74, 0.2)' : 'rgba(220, 38, 38, 0.2)',
-                      color: candidate.scan_result.above_ema_100 ? '#86efac' : '#fca5a5'
-                    }}>
-                      {candidate.scan_result.above_ema_100 ? '↑ Above' : '↓ Below'}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    {candidate.has_news ? (
-                      <span style={{ color: '#60a5fa', fontWeight: 600 }}>📰</span>
-                    ) : (
-                      <span style={{ color: '#64748b' }}>-</span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button
-                      onClick={() => onSelectTicker(candidate.ticker.symbol)}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.85rem',
-                        background: isSelected ? '#1d4ed8' : '#2563eb'
-                      }}
-                    >
-                      {isSelected ? 'Selected' : 'View'}
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      )}
-    </div>
+          return (
+            <tr
+              key={c.ticker.id}
+              className={isSelected ? 'selected' : ''}
+              onClick={() => onSelectTicker(c.ticker.symbol)}
+            >
+              <td>
+                <a
+                  className="ticker-link"
+                  href={yahooUrl(c.ticker.symbol)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Open on Yahoo Finance"
+                >
+                  {c.ticker.symbol}<span className="ext">↗</span>
+                </a>
+              </td>
+              <td className="num">
+                <span className={`pill ${up ? 'pill-up' : 'pill-down'}`}>
+                  {up ? '▲' : '▼'} {up ? '+' : ''}{sr.gap_pct.toFixed(2)}%
+                </span>
+              </td>
+              <td className="num">${sr.price?.toFixed(2)}</td>
+              <td className="num">
+                <div className="vol-wrap">
+                  <span>
+                    {(sr.volume / 1e6).toFixed(1)}M
+                    {ratio && <small style={{ color: 'var(--text-dim)', marginLeft: 4 }}>{ratio.toFixed(1)}×</small>}
+                  </span>
+                  {ratio && (
+                    <span className="vol-bar"><span className="vol-fill" style={{ width: `${fill}%` }} /></span>
+                  )}
+                </div>
+              </td>
+              <td className="num" style={{ color: rsiZone(sr.rsi_14).color, fontWeight: 600 }}>
+                {rsiZone(sr.rsi_14).label}
+              </td>
+              <td className="center">
+                <span className={`badge ${sr.above_ema_100 ? 'badge-above' : 'badge-below'}`}>
+                  {sr.above_ema_100 ? '↑ Above' : '↓ Below'}
+                </span>
+              </td>
+              <td className="center">
+                {c.has_news
+                  ? <span title="Has recent news catalyst">📰</span>
+                  : <span className="badge-muted">—</span>}
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
   )
 }

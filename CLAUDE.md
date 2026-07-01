@@ -101,7 +101,7 @@ ai_analyses(id, ticker_id, requested_at, prompt_version, response, usage_tokens,
 
 ## Claude API Integration
 
-- **Model**: `claude-opus-4-1` (on-demand, can switch to sonnet for cost savings)
+- **Model**: `claude-opus-4-8` (on-demand, can switch to `claude-sonnet-4-6` for cost savings)
 - **Prompt**: Contextual — combines gap%, volume, EMA100, recent news, asks for 2–3 sentence swing trade assessment
 - **Cost**: Per-token usage. Stefan should monitor via Anthropic console.
 - **Cache**: Results stored in `ai_analyses` table. Re-run on demand.

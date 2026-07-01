@@ -24,9 +24,10 @@ async def get_candidates(db: Session = Depends(get_db)):
         logger.info("No scans found in database")
         return []
 
-    # Get all scan results from latest scan
+    # Get scan results from latest scan that passed screening rules
     scan_results = db.query(ScanResult).filter(
-        ScanResult.scan_id == latest_scan.id
+        ScanResult.scan_id == latest_scan.id,
+        ScanResult.is_candidate == True
     ).all()
 
     candidates = []
@@ -49,9 +50,14 @@ async def get_candidates(db: Session = Depends(get_db)):
                 ticker_id=result.ticker_id,
                 gap_pct=result.gap_pct,
                 volume=result.volume,
+                volume_avg_20=result.volume_avg_20,
+                rvol=result.rvol,
                 price=result.price,
                 ema_100=result.ema_100,
                 above_ema_100=result.above_ema_100,
+                rsi_14=result.rsi_14,
+                atr_14=result.atr_14,
+                atr_pct=result.atr_pct,
                 has_news=result.has_news,
                 timestamp=result.timestamp,
                 ticker=TickerResponse(

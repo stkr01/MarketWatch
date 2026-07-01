@@ -60,11 +60,12 @@ def test_database():
     """Verify database setup"""
     logger.info("\nTesting database...")
     try:
-        from app.db import Base, engine
+        from app.db import Base, engine, ensure_schema
         from app.models import Ticker, Scan, ScanResult, NewsItem, AIAnalysis
 
-        # Create tables
+        # Create tables and apply lightweight migrations (mirrors app startup)
         Base.metadata.create_all(bind=engine)
+        ensure_schema()
         logger.info(f"  Database URL: {engine.url}")
         logger.info("✓ Database tables created")
         return True

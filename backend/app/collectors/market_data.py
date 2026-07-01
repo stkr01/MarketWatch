@@ -8,6 +8,46 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def _to_float(value) -> float:
+    """Robustly coerce a pandas/numpy scalar to a Python float."""
+    if hasattr(value, "item"):
+        return float(value.item())
+    return float(value)
+
+
+def _compute_rsi(close: pd.Series, period: int = 14) -> float | None:
+    """Wilder's RSI on closing prices."""
+    delta = close.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+
+    last_gain = avg_gain.iloc[-1]
+    last_loss = avg_loss.iloc[-1]
+    if pd.isna(last_gain) or pd.isna(last_loss):
+        return None
+    if last_loss == 0:
+        return 100.0
+    rs = _to_float(last_gain) / _to_float(last_loss)
+    return round(100 - (100 / (1 + rs)), 2)
+
+
+def _compute_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> float | None:
+    """Wilder's Average True Range."""
+    prev_close = close.shift(1)
+    true_range = pd.concat([
+        (high - low),
+        (high - prev_close).abs(),
+        (low - prev_close).abs(),
+    ], axis=1).max(axis=1)
+    atr = true_range.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    last = atr.iloc[-1]
+    if pd.isna(last):
+        return None
+    return round(_to_float(last), 2)
+
+
 def get_market_data(ticker: str) -> dict | None:
     """
     Get gap%, volume, EMA100 for a ticker
@@ -15,8 +55,9 @@ def get_market_data(ticker: str) -> dict | None:
     Returns dict with market data or None if fetch fails
     """
     try:
-        # Download 3 months of historical data for EMA calculation
-        data = yf.download(ticker, period="3mo", progress=False, threads=False)
+        # Download 1 year of history so the 100-day EMA has enough data to
+        # be meaningful (a 3-month window only has ~63 trading days < 100).
+        data = yf.download(ticker, period="1y", progress=False, threads=False)
 
         if data is None or data.empty or len(data) < 2:
             logger.warning(f"Insufficient data for {ticker}")
@@ -54,18 +95,31 @@ def get_market_data(ticker: str) -> dict | None:
         ema_100 = float(ema_100_val.item() if hasattr(ema_100_val, 'item') else ema_100_val)
         above_ema = current_close > ema_100
 
+        # Additional swing indicators
+        rvol = round(current_volume / volume_avg_20, 2) if volume_avg_20 > 0 else None
+        rsi_14 = _compute_rsi(data['Close'])
+        atr_14 = _compute_atr(data['High'], data['Low'], data['Close'])
+        atr_pct = round((atr_14 / current_close) * 100, 2) if atr_14 and current_close > 0 else None
+
         result = {
             "ticker": ticker,
             "gap_pct": float(gap_pct),
             "volume": current_volume,
             "volume_avg_20": volume_avg_20,
+            "rvol": rvol,
             "price": current_close,
             "ema_100": ema_100,
             "above_ema_100": bool(above_ema),
+            "rsi_14": rsi_14,
+            "atr_14": atr_14,
+            "atr_pct": atr_pct,
             "timestamp": datetime.utcnow()
         }
 
-        logger.debug(f"{ticker}: gap={gap_pct:.2f}%, price=${current_close:.2f}, EMA100=${ema_100:.2f}")
+        logger.debug(
+            f"{ticker}: gap={gap_pct:.2f}%, price=${current_close:.2f}, "
+            f"RVOL={rvol}, RSI={rsi_14}, ATR%={atr_pct}"
+        )
         return result
 
     except Exception as e:
