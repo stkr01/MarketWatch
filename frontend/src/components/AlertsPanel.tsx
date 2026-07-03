@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import { yahooUrl, priceSourceBadge } from '../utils'
+import TraceButton from './TraceButton'
+import StatusBox from './StatusBox'
 
 interface Alert {
   symbol: string
@@ -58,9 +60,9 @@ export default function AlertsPanel() {
           {data && data.alerts.length > 0 && <span className="count">{data.alerts.length}</span>}
         </div>
         {data?.active && (
-          <button className="btn-ghost btn-sm" onClick={sendTest} disabled={testing}>
+          <TraceButton variant="cyan" size="sm" onClick={sendTest} disabled={testing}>
             {testing ? <span className="spinner" /> : 'Test'}
-          </button>
+          </TraceButton>
         )}
       </div>
 
@@ -70,13 +72,13 @@ export default function AlertsPanel() {
         <>
           <div className="alert-config">
             {data.active ? (
-              <span className="alert-on">
-                ● Active · {data.channels.join(', ')} · gap ≥ {data.gap_threshold_pct}% & RVOL ≥ {data.rvol_threshold}
-              </span>
+              <StatusBox tone="green" title={`Active · ${data.channels.join(', ')}`}>
+                Fires on gap ≥ {data.gap_threshold_pct}% &amp; RVOL ≥ {data.rvol_threshold}
+              </StatusBox>
             ) : (
-              <span className="alert-off">
-                ○ Inactive — set TELEGRAM_BOT_TOKEN/CHAT_ID or DISCORD_WEBHOOK_URL in backend/.env
-              </span>
+              <StatusBox tone="dim" title="Inactive">
+                Set TELEGRAM_BOT_TOKEN/CHAT_ID or DISCORD_WEBHOOK_URL in backend/.env
+              </StatusBox>
             )}
             {testMsg && <div className="alert-testmsg">{testMsg}</div>}
           </div>

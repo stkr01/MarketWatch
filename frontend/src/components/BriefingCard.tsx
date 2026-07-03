@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
+import TraceButton from './TraceButton'
 
 interface Briefing {
   date: string
@@ -57,13 +58,9 @@ export default function BriefingCard() {
               {data.usage_tokens ? ` · ${data.usage_tokens} tok` : ''}
             </span>
           )}
-          <button
-            className={hasContent ? 'btn-ghost btn-sm' : ''}
-            onClick={() => generate.mutate()}
-            disabled={busy}
-          >
-            {busy ? <><span className="spinner" />Generating…</> : hasContent ? '↻ Refresh' : '✨ Generate'}
-          </button>
+          <TraceButton variant="gold" size="sm" always={!hasContent} onClick={() => generate.mutate()} disabled={busy}>
+            {busy ? <><span className="spinner" />Generating…</> : hasContent ? '↻ Refresh' : '✦ Generate'}
+          </TraceButton>
         </div>
       </div>
 

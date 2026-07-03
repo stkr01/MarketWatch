@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import { useEffect, useState } from 'react'
+import TraceButton from './TraceButton'
+import StatusBox from './StatusBox'
 
 export default function ScanStatusBar() {
   const queryClient = useQueryClient()
@@ -70,14 +72,18 @@ export default function ScanStatusBar() {
       </div>
       <div className="stat-card">
         <div className="stat-label">Status</div>
-        <div className={`stat-value ${isPending ? 'success' : ''}`}>
-          {isPending ? 'Scanning' : 'Idle'}
+        <div style={{ marginTop: '0.15rem' }}>
+          <StatusBox
+            chip
+            tone={isPending ? 'orange' : 'green'}
+            title={isPending ? 'Scanning' : 'Online'}
+          />
         </div>
       </div>
       <div className="scan-action">
-        <button className="btn-scan" onClick={() => triggerScan()} disabled={isPending}>
-          {isPending ? <><span className="spinner" />Scanning…</> : <>🔄 Scan Now</>}
-        </button>
+        <TraceButton variant="green" always onClick={() => triggerScan()} disabled={isPending}>
+          {isPending ? <><span className="spinner" />Scanning…</> : <>◈ Scan Now</>}
+        </TraceButton>
       </div>
     </div>
   )

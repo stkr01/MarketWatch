@@ -316,6 +316,240 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .btn-sm { padding: 0.4rem 0.85rem; font-size: 0.8rem; }
 
+/* =====================================================================
+   FUTURISTIC HUD — border-trace buttons & pulsing status indicators
+   ===================================================================== */
+@property --glow-x { syntax: '<percentage>'; initial-value: 50%; inherits: false; }
+@property --glow-y { syntax: '<percentage>'; initial-value: 0%;  inherits: false; }
+
+@keyframes trace-rect {
+  0%   { --glow-x: 0%;   --glow-y: 0%;   }
+  25%  { --glow-x: 100%; --glow-y: 0%;   }
+  50%  { --glow-x: 100%; --glow-y: 100%; }
+  75%  { --glow-x: 0%;   --glow-y: 100%; }
+  100% { --glow-x: 0%;   --glow-y: 0%;   }
+}
+@keyframes trace-rect-reverse {
+  0%   { --glow-x: 0%;   --glow-y: 0%;   }
+  25%  { --glow-x: 0%;   --glow-y: 100%; }
+  50%  { --glow-x: 100%; --glow-y: 100%; }
+  75%  { --glow-x: 100%; --glow-y: 0%;   }
+  100% { --glow-x: 0%;   --glow-y: 0%;   }
+}
+@keyframes hud-ambient-pulse { 0%,100% { opacity: 0.08; } 50% { opacity: 0.25; } }
+@keyframes hud-idle-pulse    { 0%,100% { opacity: 0.15; } 50% { opacity: 0.35; } }
+@keyframes hud-idle-border   { 0%,100% { opacity: 0.25; } 50% { opacity: 0.5;  } }
+
+/* ---- trace button ---- */
+.trace-btn {
+  position: relative;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: transform 0.15s ease;
+}
+.trace-btn:active:not(:disabled) { transform: scale(0.96); }
+.trace-btn:hover:not(:disabled) { transform: none; box-shadow: none; }
+.trace-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* static dim border */
+.trace-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 12px;
+  border: 1.5px solid var(--base-color);
+  opacity: 0.28;
+  pointer-events: none;
+  animation: hud-idle-border 3s ease-in-out infinite;
+}
+.trace-btn:hover:not(:disabled)::before { opacity: 0.55; animation: none; }
+
+/* travelling light (ring only, via mask) */
+.trace-light {
+  position: absolute; inset: -2px;
+  border-radius: 14px;
+  padding: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    circle 55px at var(--glow-x) var(--glow-y),
+    #fff 0%, var(--flash-color) 15%,
+    color-mix(in srgb, var(--flash-color) 50%, transparent) 40%, transparent 70%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.trace-btn:hover:not(:disabled) .trace-light { opacity: 1; animation: trace-rect 1.5s linear infinite; }
+.trace-btn:hover:not(:disabled) .trace-light.reversed { animation: trace-rect-reverse 1.5s linear infinite; }
+
+/* outer glow following the light */
+.trace-outer-glow {
+  position: absolute; inset: -10px;
+  border-radius: 22px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  background: radial-gradient(circle 70px at var(--glow-x) var(--glow-y), var(--flash-color) 0%, transparent 70%);
+  filter: blur(14px);
+}
+.trace-btn:hover:not(:disabled) .trace-outer-glow { opacity: 0.5; animation: trace-rect 1.5s linear infinite; }
+.trace-btn:hover:not(:disabled) .trace-outer-glow.reversed { animation: trace-rect-reverse 1.5s linear infinite; }
+
+/* ambient border haze */
+.trace-ambient {
+  position: absolute; inset: -4px;
+  border-radius: 16px;
+  border: 1px solid var(--flash-color);
+  filter: blur(8px);
+  opacity: 0;
+  pointer-events: none; z-index: -1;
+  animation: hud-idle-pulse 3s ease-in-out infinite;
+}
+.trace-btn:hover:not(:disabled) .trace-ambient { animation: hud-ambient-pulse 2s ease-in-out infinite; }
+
+/* label */
+.trace-inner {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  color: rgba(255,255,255,0.82);
+  font-size: 0.85rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  user-select: none; transition: color 0.3s ease, text-shadow 0.3s ease;
+  white-space: nowrap;
+}
+.trace-btn:hover:not(:disabled) .trace-inner {
+  color: #fff;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--flash-color) 40%, transparent);
+}
+.trace-sm .trace-inner { padding: 0.45rem 0.95rem; font-size: 0.72rem; letter-spacing: 0.05em; }
+
+/* always-on */
+.trace-btn.trace-always .trace-light { opacity: 0.55; animation: trace-rect 2.6s linear infinite; }
+.trace-btn.trace-always .trace-light.reversed { animation: trace-rect-reverse 2.6s linear infinite; }
+.trace-btn.trace-always .trace-outer-glow { opacity: 0.28; animation: trace-rect 2.6s linear infinite; }
+.trace-btn.trace-always .trace-outer-glow.reversed { animation: trace-rect-reverse 2.6s linear infinite; }
+.trace-btn.trace-always .trace-ambient { animation: hud-ambient-pulse 3s ease-in-out infinite; }
+.trace-btn.trace-always::before { opacity: 0.4; }
+.trace-btn.trace-always:hover:not(:disabled) .trace-light { opacity: 1; animation: trace-rect 1.3s linear infinite; }
+.trace-btn.trace-always:hover:not(:disabled) .trace-light.reversed { animation: trace-rect-reverse 1.3s linear infinite; }
+.trace-btn.trace-always:hover:not(:disabled) .trace-outer-glow { opacity: 0.5; animation: trace-rect 1.3s linear infinite; }
+
+/* click burst */
+@keyframes hud-click-burst {
+  0%   { box-shadow: 0 0 0 0 var(--flash-color); opacity: 0.8; }
+  100% { box-shadow: 0 0 0 18px transparent; opacity: 0; }
+}
+.trace-btn .burst {
+  position: absolute; inset: 0; border-radius: 12px;
+  pointer-events: none;
+  animation: hud-click-burst 0.42s ease-out forwards;
+}
+.trace-btn .spinner { border-top-color: var(--flash-color); }
+
+/* ---- status indicators (banners + chips) ---- */
+@keyframes status-border-pulse {
+  0%,100% { border-color: color-mix(in srgb, var(--status-color) 30%, transparent); }
+  50%     { border-color: var(--status-color); }
+}
+@keyframes status-border-urgent {
+  0%,100% { border-color: color-mix(in srgb, var(--status-color) 35%, transparent); }
+  30%     { border-color: var(--status-color); }
+  50%     { border-color: color-mix(in srgb, var(--status-color) 50%, transparent); }
+  70%     { border-color: var(--status-color); }
+}
+@keyframes status-glow-pulse {
+  0%,100% { opacity: 0; box-shadow: 0 0 12px var(--status-color), inset 0 0 12px color-mix(in srgb, var(--status-color) 8%, transparent); }
+  50%     { opacity: 1; box-shadow: 0 0 26px var(--status-color), 0 0 55px color-mix(in srgb, var(--status-color) 28%, transparent), inset 0 0 18px color-mix(in srgb, var(--status-color) 12%, transparent); }
+}
+@keyframes status-glow-urgent {
+  0%,100% { opacity: 0; box-shadow: 0 0 12px var(--status-color); }
+  30%     { opacity: 1; box-shadow: 0 0 28px var(--status-color), 0 0 55px color-mix(in srgb, var(--status-color) 32%, transparent); }
+  50%     { opacity: 0.3; box-shadow: 0 0 14px var(--status-color); }
+  70%     { opacity: 0.9; box-shadow: 0 0 24px var(--status-color), 0 0 48px color-mix(in srgb, var(--status-color) 24%, transparent); }
+}
+@keyframes status-dot-pulse {
+  0%,100% { transform: scale(0.85); opacity: 0.5; box-shadow: 0 0 4px var(--status-color); }
+  50%     { transform: scale(1); opacity: 1; box-shadow: 0 0 10px var(--status-color), 0 0 20px color-mix(in srgb, var(--status-color) 40%, transparent); }
+}
+@keyframes status-text-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 0.9; } }
+
+.status-box {
+  position: relative;
+  border-radius: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--status-color) 30%, transparent);
+  padding: 0.9rem 1.15rem;
+  background: rgba(255,255,255,0.015);
+}
+.status-box.status-green,
+.status-box.status-cyan  { animation: status-border-pulse 3s ease-in-out infinite; }
+.status-box.status-orange { animation: status-border-pulse 2.2s ease-in-out infinite; }
+.status-box.status-red   { animation: status-border-urgent 1.6s ease-in-out infinite; }
+.status-box.status-dim   { border-color: color-mix(in srgb, var(--status-color) 30%, transparent); }
+
+.status-box-glow { position: absolute; inset: -4px; border-radius: 16px; pointer-events: none; z-index: -1; }
+.status-green .status-box-glow, .status-cyan .status-box-glow { animation: status-glow-pulse 3s ease-in-out infinite; }
+.status-orange .status-box-glow { animation: status-glow-pulse 2.2s ease-in-out infinite; }
+.status-red .status-box-glow { animation: status-glow-urgent 1.6s ease-in-out infinite; }
+
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--status-color);
+  display: inline-block; margin-right: 0.55rem; vertical-align: middle; flex: 0 0 auto;
+}
+.status-green .status-dot, .status-cyan .status-dot { animation: status-dot-pulse 3s ease-in-out infinite; }
+.status-orange .status-dot { animation: status-dot-pulse 2.2s ease-in-out infinite; }
+.status-red .status-dot { animation: status-dot-pulse 1.6s ease-in-out infinite; }
+.status-dim .status-dot { opacity: 0.5; }
+
+.status-title {
+  display: flex; align-items: center;
+  font-size: 0.85rem; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--status-color); margin: 0;
+}
+.status-box .status-desc {
+  font-size: 0.78rem; color: var(--text-dim); margin: 0.5rem 0 0; line-height: 1.5;
+  padding-left: 1.1rem;
+}
+.status-green .status-title, .status-cyan .status-title { animation: status-text-pulse 3s ease-in-out infinite; }
+.status-orange .status-title { animation: status-text-pulse 2.2s ease-in-out infinite; }
+.status-red .status-title { animation: status-text-pulse 1.6s ease-in-out infinite; }
+.status-dim .status-title { color: var(--text-muted); }
+
+/* compact inline chip variant */
+.status-chip {
+  position: relative;
+  display: inline-flex; align-items: center;
+  padding: 0.32rem 0.7rem 0.32rem 0.6rem;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--status-color) 40%, transparent);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--status-color);
+  background: color-mix(in srgb, var(--status-color) 10%, transparent);
+}
+.status-chip.status-green, .status-chip.status-cyan { animation: status-border-pulse 3s ease-in-out infinite; }
+.status-chip.status-orange { animation: status-border-pulse 2.2s ease-in-out infinite; }
+.status-chip.status-red { animation: status-border-urgent 1.6s ease-in-out infinite; }
+.status-chip.status-dim { color: var(--text-muted); border-color: var(--border-strong); }
+
+/* ---- panel HUD accent: animated scan line under the header ---- */
+@keyframes hud-scan {
+  0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }
+}
+.panel .panel-header { position: relative; overflow: hidden; }
+.panel .panel-header::after {
+  content: '';
+  position: absolute; left: 0; bottom: -1px; height: 1px; width: 45%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.55;
+  animation: hud-scan 5.5s linear infinite;
+}
+
 /* ---------- Data table ---------- */
 .data-table {
   width: 100%;

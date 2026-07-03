@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
+import TraceButton from './TraceButton'
 
 interface Props {
   ticker: string
@@ -37,16 +38,7 @@ export default function AIAnalysisPanel({ ticker }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h3 style={{ color: '#60a5fa' }}>🤖 Claude AI Analysis</h3>
         {isFetched && !isLoading && (
-          <button
-            onClick={handleRefresh}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.85rem',
-              background: '#334155'
-            }}
-          >
-            ↻ Refresh
-          </button>
+          <TraceButton variant="violet" size="sm" onClick={handleRefresh}>↻ Refresh</TraceButton>
         )}
       </div>
 
@@ -56,16 +48,9 @@ export default function AIAnalysisPanel({ ticker }: Props) {
           <p style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
             Claude will examine gaps, volume, EMA trends, and news catalysts
           </p>
-          <button
-            onClick={handleAnalyze}
-            style={{
-              padding: '0.75rem 2rem',
-              fontSize: '1rem',
-              background: '#2563eb'
-            }}
-          >
-            Generate Analysis
-          </button>
+          <div style={{ display: 'inline-flex', justifyContent: 'center' }}>
+            <TraceButton variant="violet" always onClick={handleAnalyze}>⬡ Generate Analysis</TraceButton>
+          </div>
         </div>
       ) : isLoading ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
@@ -82,18 +67,8 @@ export default function AIAnalysisPanel({ ticker }: Props) {
           borderRadius: '6px',
           color: '#fca5a5'
         }}>
-          <p>Failed to analyze. Please try again.</p>
-          <button
-            onClick={handleRefresh}
-            style={{
-              marginTop: '1rem',
-              padding: '0.5rem 1rem',
-              fontSize: '0.85rem',
-              background: '#dc2626'
-            }}
-          >
-            Retry
-          </button>
+          <p style={{ marginBottom: '1rem' }}>Failed to analyze. Please try again.</p>
+          <TraceButton variant="magenta" size="sm" onClick={handleRefresh}>Retry</TraceButton>
         </div>
       ) : analysis ? (
         <div>
