@@ -37,6 +37,9 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
         "rsi_14": "FLOAT",
         "atr_14": "FLOAT",
         "atr_pct": "FLOAT",
+        "previous_close": "FLOAT",
+        "pre_market_price": "FLOAT",
+        "price_source": "VARCHAR",
     },
     "tickers": {
         "is_active": "BOOLEAN DEFAULT 1",

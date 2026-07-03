@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Market data
     TOP_N_TICKERS: int = 10  # Dev: top 10, can be config later
     SCAN_INTERVAL_MINUTES: int = 5  # Scan every 5 minutes during pre-market
+    # Use real pre/post-market intraday quotes for the gap (vs. daily open).
+    # When True, gap% is measured against the latest actual pre-market trade.
+    USE_PREMARKET_DATA: bool = os.getenv("USE_PREMARKET_DATA", "true").lower() == "true"
     PRE_MARKET_START_HOUR: int = 4  # 04:00 EST
     PRE_MARKET_END_HOUR: int = 9  # 09:30 EST (approximate)
     PRE_MARKET_END_MINUTE: int = 30

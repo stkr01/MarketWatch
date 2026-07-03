@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
-import { yahooUrl, rsiZone } from '../utils'
+import { yahooUrl, rsiZone, priceSourceBadge } from '../utils'
 
 interface Props {
   onSelectTicker: (ticker: string) => void
@@ -70,7 +70,15 @@ export default function CandidateTable({ onSelectTicker, selectedTicker }: Props
                   {up ? '▲' : '▼'} {up ? '+' : ''}{sr.gap_pct.toFixed(2)}%
                 </span>
               </td>
-              <td className="num">${sr.price?.toFixed(2)}</td>
+              <td className="num">
+                ${sr.price?.toFixed(2)}
+                {(() => {
+                  const b = priceSourceBadge(sr.price_source)
+                  return b ? (
+                    <span className="src-badge" title={b.title} style={{ marginLeft: 4 }}>{b.label}</span>
+                  ) : null
+                })()}
+              </td>
               <td className="num">
                 <div className="vol-wrap">
                   <span>

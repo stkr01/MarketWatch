@@ -397,6 +397,19 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .badge-below { color: #fda4af; background: var(--down-soft); }
 .badge-muted { color: var(--text-dim); }
 
+/* Price-source tag (PRE / POST / LIVE / EOD) */
+.src-badge {
+  display: inline-block;
+  padding: 0.05rem 0.35rem;
+  border-radius: 5px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  color: var(--accent);
+  background: rgba(34, 211, 238, 0.14);
+}
+
 /* Volume ratio mini-bar */
 .vol-wrap { display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end; }
 .vol-bar {

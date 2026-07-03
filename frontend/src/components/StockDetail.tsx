@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import AIAnalysisPanel from './AIAnalysisPanel'
-import { yahooUrl, rsiZone } from '../utils'
+import { yahooUrl, rsiZone, priceSourceBadge } from '../utils'
 
 interface Props {
   ticker: string
@@ -53,10 +53,21 @@ export default function StockDetail({ ticker }: Props) {
             <div className="metric-val" style={{ color: metrics.gap_pct >= 0 ? 'var(--up)' : 'var(--down)' }}>
               {metrics.gap_pct >= 0 ? '+' : ''}{metrics.gap_pct.toFixed(2)}%
             </div>
+            {metrics.previous_close != null && (
+              <small style={{ color: 'var(--text-dim)' }}>vs ${metrics.previous_close.toFixed(2)} close</small>
+            )}
           </div>
           <div className="metric">
             <div className="metric-label">Price</div>
-            <div className="metric-val">${metrics.price?.toFixed(2)}</div>
+            <div className="metric-val">
+              ${metrics.price?.toFixed(2)}
+              {(() => {
+                const b = priceSourceBadge(metrics.price_source)
+                return b ? (
+                  <span className="src-badge" title={b.title} style={{ marginLeft: 6 }}>{b.label}</span>
+                ) : null
+              })()}
+            </div>
           </div>
           <div className="metric">
             <div className="metric-label">RVOL</div>

@@ -43,6 +43,9 @@ class ScanResult(Base):
     volume_avg_20 = Column(Float, nullable=True)
     rvol = Column(Float, nullable=True)
     price = Column(Float)
+    previous_close = Column(Float, nullable=True)  # Gap reference (prior regular close)
+    pre_market_price = Column(Float, nullable=True)  # Live intraday quote used for gap
+    price_source = Column(String, nullable=True)  # premarket / regular / postmarket / closed / daily
     ema_100 = Column(Float, nullable=True)
     above_ema_100 = Column(Boolean, nullable=True)
     rsi_14 = Column(Float, nullable=True)

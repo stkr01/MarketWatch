@@ -23,6 +23,9 @@ class ScanResultBase(BaseModel):
     volume_avg_20: Optional[float] = None
     rvol: Optional[float] = None
     price: float
+    previous_close: Optional[float] = None
+    pre_market_price: Optional[float] = None
+    price_source: Optional[str] = None
     ema_100: Optional[float] = None
     above_ema_100: Optional[bool] = None
     rsi_14: Optional[float] = None

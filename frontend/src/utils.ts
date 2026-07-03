@@ -10,6 +10,24 @@ export function rsiZone(rsi?: number | null): { color: string; label: string } {
   return { color: 'var(--text)', label: rsi.toFixed(0) }
 }
 
+/** Short badge for where a scan's price came from (backend `price_source`). */
+export function priceSourceBadge(
+  source?: string | null,
+): { label: string; title: string } | null {
+  switch (source) {
+    case 'premarket':
+      return { label: 'PRE', title: 'Live pre-market price (04:00–09:30 ET)' }
+    case 'postmarket':
+      return { label: 'POST', title: 'Live post-market price (16:00–20:00 ET)' }
+    case 'regular':
+      return { label: 'LIVE', title: 'Live regular-session price' }
+    case 'daily':
+      return { label: 'EOD', title: 'Daily close (no intraday quote available)' }
+    default:
+      return null
+  }
+}
+
 export type Session = {
   label: string
   cls: 'session-pre' | 'session-open' | 'session-closed'
