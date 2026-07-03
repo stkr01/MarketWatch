@@ -5,8 +5,9 @@ import logging
 
 from app.config import settings
 from app.db import Base, engine, ensure_schema
-from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing, alerts
+from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing, alerts, settings as settings_router
 from app.collectors.universe import seed_default_watchlist
+from app import runtime_config
 from app.scheduler import start_scheduler, stop_scheduler
 
 # Configure logging
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 Base.metadata.create_all(bind=engine)
 ensure_schema()
 seed_default_watchlist()
+runtime_config.load()
 
 
 @asynccontextmanager
@@ -68,6 +70,7 @@ app.include_router(watchlist.router, prefix="/api", tags=["watchlist"])
 app.include_router(outcomes.router, prefix="/api", tags=["outcomes"])
 app.include_router(briefing.router, prefix="/api", tags=["briefing"])
 app.include_router(alerts.router, prefix="/api", tags=["alerts"])
+app.include_router(settings_router.router, prefix="/api", tags=["settings"])
 
 
 @app.get("/health")

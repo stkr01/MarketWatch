@@ -1,5 +1,6 @@
 """Swing trading rule screening logic"""
 from app.config import settings
+from app import runtime_config
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,9 +30,10 @@ def meets_swing_criteria(market_data: dict, has_news: bool) -> tuple[bool, dict]
 
     gap_pct = abs(market_data["gap_pct"])
 
-    # Rule 1: Gap threshold
-    if gap_pct < settings.GAP_THRESHOLD_PERCENT:
-        details["fail_reason"] = f"Gap {gap_pct:.2f}% < threshold {settings.GAP_THRESHOLD_PERCENT}%"
+    # Rule 1: Gap threshold (runtime-adjustable from the UI)
+    gap_threshold = runtime_config.get_float("GAP_THRESHOLD_PERCENT")
+    if gap_pct < gap_threshold:
+        details["fail_reason"] = f"Gap {gap_pct:.2f}% < threshold {gap_threshold}%"
         return False, details
 
     # Rule 2: Volume multiplier

@@ -110,6 +110,16 @@ class Briefing(Base):
     usage_tokens = Column(Integer, nullable=True)
 
 
+class AppSetting(Base):
+    """Runtime-adjustable setting (overrides an env default), editable from the UI."""
+    __tablename__ = "app_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True)
+    value = Column(String)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class AlertSent(Base):
     """A notification dispatched for a strong candidate (deduped per symbol/day)."""
     __tablename__ = "alerts_sent"

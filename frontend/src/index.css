@@ -796,6 +796,51 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   font-style: italic;
 }
 
+/* ---------- Screener settings ---------- */
+.settings-body { padding: 0.5rem 1.35rem 1.1rem; }
+.setting-row { padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+.setting-row:last-of-type { border-bottom: none; }
+.setting-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.55rem; }
+.setting-label { font-size: 0.86rem; font-weight: 600; color: var(--text); }
+.setting-val {
+  font-size: 0.95rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.setting-foot { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; }
+.setting-help { font-size: 0.72rem; color: var(--text-dim); line-height: 1.4; }
+.setting-reset {
+  flex: 0 0 auto;
+  background: none; border: 1px solid var(--border-strong); color: var(--text-muted);
+  font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 6px;
+}
+.setting-reset:hover:not(:disabled) { color: var(--text); box-shadow: none; transform: none; border-color: var(--accent); }
+.settings-note { font-size: 0.68rem; color: var(--text-dim); margin-top: 0.7rem; font-style: italic; }
+
+/* futuristic range slider */
+.setting-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(90deg,
+    var(--accent) 0%, var(--primary) var(--pct, 50%),
+    var(--surface-2) var(--pct, 50%), var(--surface-2) 100%);
+  outline: none;
+}
+.setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent), 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent);
+  transition: transform 0.12s ease;
+}
+.setting-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.setting-slider::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+.setting-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
 /* ---------- Alerts ---------- */
 .alert-config { padding: 0.15rem 1.35rem 0.6rem; font-size: 0.78rem; }
 .alert-on { color: #86efac; }

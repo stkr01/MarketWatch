@@ -13,6 +13,7 @@ import requests
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app import runtime_config
 from app.models import AlertSent
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def alerts_status() -> dict:
         "enabled": settings.ALERTS_ENABLED,
         "channels": channels,
         "active": settings.ALERTS_ENABLED and bool(channels),
-        "gap_threshold_pct": settings.ALERT_GAP_THRESHOLD_PERCENT,
+        "gap_threshold_pct": runtime_config.get_float("ALERT_GAP_THRESHOLD_PERCENT"),
         "rvol_threshold": settings.ALERT_RVOL_THRESHOLD,
     }
 
@@ -47,7 +48,7 @@ def _is_strong(data: dict) -> bool:
     """Does a candidate clear the tighter alert thresholds?"""
     gap = abs(data.get("gap_pct") or 0.0)
     rvol = data.get("rvol")
-    if gap < settings.ALERT_GAP_THRESHOLD_PERCENT:
+    if gap < runtime_config.get_float("ALERT_GAP_THRESHOLD_PERCENT"):
         return False
     # RVOL may be missing; if present it must clear the bar.
     if rvol is not None and rvol < settings.ALERT_RVOL_THRESHOLD:

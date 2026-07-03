@@ -95,6 +95,7 @@ Notes:
 | GET  | `/api/outcomes` | Screener performance (win rate, returns) — **new** |
 | GET  | `/api/briefing` · POST `/api/briefing/generate` | AI morning briefing — **new** |
 | GET  | `/api/alerts` · POST `/api/alerts/test` | Alert config + recent sent alerts; send test notification — **new** |
+| GET/PATCH | `/api/settings` | Runtime-adjustable thresholds (screening & alert gap %), live-editable from UI — **new** |
 
 ---
 
@@ -133,6 +134,7 @@ alerts_sent†(id, symbol, scan_id, gap_pct, rvol, price, price_source,
 - `scheduler.py` — APScheduler (every min in DEBUG, 5-min pre-market in prod)
 - `outcomes.py` — **candidate outcome record + evaluate service**
 - `alerts.py` — **strong-candidate alerts (Telegram/Discord webhooks, per-day dedup)**
+- `runtime_config.py` — **live-editable thresholds (DB-backed overrides of env defaults)**
 - `collectors/` — `universe.py` (DB watchlist + seed), `market_data.py` (yfinance + **RSI/ATR/RVOL**), `news_feed.py` (**Yahoo per-ticker RSS**), **`economic_calendar.py`**
 - `screeners/swing_rules.py` — gap/volume/news filtering
 - `ai/` — `claude_analyzer.py` (per-ticker), **`briefing.py`** (morning briefing)
