@@ -6,6 +6,7 @@ import EconomicCalendar from '../components/EconomicCalendar'
 import MarketClock from '../components/MarketClock'
 import Watchlist from '../components/Watchlist'
 import ScreenerPerformance from '../components/ScreenerPerformance'
+import AlertsPanel from '../components/AlertsPanel'
 import BriefingCard from '../components/BriefingCard'
 import { yahooUrl } from '../utils'
 
@@ -43,6 +44,7 @@ export default function Dashboard() {
 
         <aside>
           <Watchlist />
+          <AlertsPanel />
           <ScreenerPerformance />
           <EconomicCalendar />
         </aside>

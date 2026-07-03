@@ -9,6 +9,7 @@ from app.collectors.market_data import get_bulk_market_data
 from app.collectors.news_feed import get_bulk_news
 from app.screeners.swing_rules import screen_candidates
 from app.outcomes import record_candidate_outcomes
+from app.alerts import dispatch_candidate_alerts
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,11 @@ def run_market_scan() -> dict:
         # Track candidate outcomes (dedup per day) for performance analytics
         candidate_data = [d for d in market_data_list if d["ticker"] in candidate_set]
         record_candidate_outcomes(db, scan.id, candidate_data)
+
+        # Notify on strong candidates (deduped per symbol/day; no-op if unconfigured)
+        alerts_sent = dispatch_candidate_alerts(db, scan.id, candidate_data)
+        if alerts_sent:
+            logger.info(f"  → {alerts_sent} alert(s) dispatched")
 
         # Summary
         elapsed = (datetime.utcnow() - start_time).total_seconds()

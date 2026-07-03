@@ -562,6 +562,35 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   font-style: italic;
 }
 
+/* ---------- Alerts ---------- */
+.alert-config { padding: 0.15rem 1.35rem 0.6rem; font-size: 0.78rem; }
+.alert-on { color: #86efac; }
+.alert-off { color: var(--text-dim); line-height: 1.4; display: block; }
+.alert-testmsg {
+  margin-top: 0.4rem;
+  color: var(--accent);
+  font-size: 0.76rem;
+}
+.alert-list { padding: 0.2rem 1.35rem 1.1rem; }
+.alert-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.86rem;
+}
+.alert-row:last-child { border-bottom: none; }
+.alert-gap { font-weight: 700; font-variant-numeric: tabular-nums; }
+.alert-status {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fda4af;
+}
+.alert-time { color: var(--text-dim); font-size: 0.76rem; text-align: right; }
+
 /* ---------- Economic calendar ---------- */
 .econ-list { display: flex; flex-direction: column; }
 

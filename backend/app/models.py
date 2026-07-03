@@ -110,6 +110,25 @@ class Briefing(Base):
     usage_tokens = Column(Integer, nullable=True)
 
 
+class AlertSent(Base):
+    """A notification dispatched for a strong candidate (deduped per symbol/day)."""
+    __tablename__ = "alerts_sent"
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String, index=True)
+    scan_id = Column(Integer, ForeignKey("scans.id"), nullable=True)
+
+    gap_pct = Column(Float, nullable=True)
+    rvol = Column(Float, nullable=True)
+    price = Column(Float, nullable=True)
+    price_source = Column(String, nullable=True)
+
+    channels = Column(String, nullable=True)  # comma-separated: telegram,discord
+    message = Column(Text, nullable=True)
+    status = Column(String, default="sent")  # sent / partial / failed / test
+    sent_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AIAnalysis(Base):
     __tablename__ = "ai_analyses"
 

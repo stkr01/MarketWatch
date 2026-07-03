@@ -1,8 +1,8 @@
 # Pre-Market Swing Trading Dashboard - Project Status
 
-**Last Updated:** 2026-07-02
-**Status:** Fas 0-3 + Dashboard Enhancements COMPLETE ✅ — Fas 4 (deploy) still pending
-**Active branch:** `feature/dashboard-enhancements` (commit `5cc95e3`, not yet merged to `main`/`master`)
+**Last Updated:** 2026-07-03
+**Status:** Fas 0-3 + Dashboard Enhancements + Live Pre-Market Gap + Alerts COMPLETE ✅ — Fas 4 (deploy) still pending
+**Active branch:** `feature/dashboard-enhancements` (not yet merged to `main`/`master`)
 
 ---
 
@@ -40,6 +40,11 @@ Notes:
 **Key Feature:** Real-time market scanning + Claude AI on-demand analysis + AI morning briefing
 
 ---
+
+## 🆕 Session 2026-07-03 — What we added
+
+- **Live pre-market gap pricing** — gap% now measured against the latest *real* intraday trade (incl. pre/post-market, 1-min bars, `prepost=True`) vs. the prior regular-session close, instead of yesterday's daily open. Addresses the top backlog item + main known limitation. `market_data.py`: `_get_intraday_snapshot()`, `_classify_session()`, `_previous_regular_close()`; new `previous_close` / `pre_market_price` / `price_source` fields (DB auto-migrated). Frontend shows PRE/POST/LIVE/EOD badges + "vs $X close". Toggle with `USE_PREMARKET_DATA` (default true).
+- **Push alerts** — notify on *strong* candidates (a screened candidate that also clears tighter thresholds: `ALERT_GAP_THRESHOLD_PERCENT` default 4%, `ALERT_RVOL_THRESHOLD` default 2.0). Channels: **Telegram** (bot token + chat id) and **Discord** (webhook URL). Deduped one-per-symbol-per-ET-day so the every-few-minutes scheduler doesn't spam. New `alerts_sent` table, `alerts.py` service, `/api/alerts` (config + recent) + `/api/alerts/test`. Sidebar "🔔 Alerts" panel with live status + Test button. No-ops safely when no channel is configured. Verified: strong/weak filtering, dispatch, dedup, DB recording (mocked channel) all pass.
 
 ## 🆕 Session 2026-07-01/02 — What we added
 
@@ -89,6 +94,7 @@ Notes:
 | GET/POST/DELETE | `/api/watchlist` (+`/{symbol}`) | Manage scan universe — **new** |
 | GET  | `/api/outcomes` | Screener performance (win rate, returns) — **new** |
 | GET  | `/api/briefing` · POST `/api/briefing/generate` | AI morning briefing — **new** |
+| GET  | `/api/alerts` · POST `/api/alerts/test` | Alert config + recent sent alerts; send test notification — **new** |
 
 ---
 
@@ -106,8 +112,12 @@ candidate_outcomes*(id, ticker_id, scan_id, symbol, flagged_at, entry_price,
              price_1d, return_1d_pct, evaluated_1d,
              price_1w, return_1w_pct, evaluated_1w)
 briefings*(id, date, content, generated_at, usage_tokens)
+alerts_sent†(id, symbol, scan_id, gap_pct, rvol, price, price_source,
+             channels, message, status, sent_at)
 ```
-`*` = added this session (auto-migrated via `ensure_schema()`).
+`*` = added in the 07-01/02 session (auto-migrated via `ensure_schema()`).
+`†` = added 07-03 (new table, created by `create_all`). `scan_results` also gained
+`previous_close` / `pre_market_price` / `price_source` (auto-migrated).
 
 ---
 
@@ -122,14 +132,15 @@ briefings*(id, date, content, generated_at, usage_tokens)
 - `pipeline.py` — scan orchestration (+ records candidate outcomes)
 - `scheduler.py` — APScheduler (every min in DEBUG, 5-min pre-market in prod)
 - `outcomes.py` — **candidate outcome record + evaluate service**
+- `alerts.py` — **strong-candidate alerts (Telegram/Discord webhooks, per-day dedup)**
 - `collectors/` — `universe.py` (DB watchlist + seed), `market_data.py` (yfinance + **RSI/ATR/RVOL**), `news_feed.py` (**Yahoo per-ticker RSS**), **`economic_calendar.py`**
 - `screeners/swing_rules.py` — gap/volume/news filtering
 - `ai/` — `claude_analyzer.py` (per-ticker), **`briefing.py`** (morning briefing)
-- `routers/` — candidates, stock, analyze, scan, news, **economic**, **watchlist**, **outcomes**, **briefing**
+- `routers/` — candidates, stock, analyze, scan, news, **economic**, **watchlist**, **outcomes**, **briefing**, **alerts**
 
 ### Frontend (`frontend/src/`)
 - `pages/Dashboard.tsx` — layout (header+clock, briefing, stat bar, 2-col grid, detail)
-- `components/` — CandidateTable, StockDetail, ScanStatusBar, AIAnalysisPanel, **MarketClock**, **EconomicCalendar**, **Watchlist**, **ScreenerPerformance**, **BriefingCard**
+- `components/` — CandidateTable, StockDetail, ScanStatusBar, AIAnalysisPanel, **MarketClock**, **EconomicCalendar**, **Watchlist**, **ScreenerPerformance**, **BriefingCard**, **AlertsPanel**
 - `api/client.ts` — axios client (`/api` proxied to :8000)
 - `utils.ts` — **`yahooUrl()`, `marketSession()`, `rsiZone()`**
 - `index.css` — redesigned dark/glassmorphism theme
@@ -149,7 +160,7 @@ briefings*(id, date, content, generated_at, usage_tokens)
 ## 🐛 Known Limitations / Backlog
 
 **Limitations**
-- **Gap is not live pre-market** — it's today's daily open vs yesterday's close (yfinance daily bars). Real pre-market quotes need a source like Finnhub/Polygon/Alpaca.
+- ~~**Gap is not live pre-market**~~ ✅ fixed (07-03) — now uses yfinance 1-min bars with `prepost=True` (last real trade vs prior regular close). Note: yfinance pre-market intraday can be delayed/sparse for thin names; a paid feed (Finnhub/Polygon/Alpaca) would be more robust.
 - Outcome returns are approximate (daily-close based, trading-day offsets).
 - `/api/scan/status` `is_running` is hardcoded `false`.
 - CORS `allow_origins=["*"]` + `allow_credentials=True` is technically invalid (harmless now, no cookies).
@@ -157,7 +168,8 @@ briefings*(id, date, content, generated_at, usage_tokens)
 - Dev DEBUG mode scans every minute → yfinance rate-limit risk + manual scan can overlap scheduler.
 
 **Feature backlog (brainstormed, not yet built)**
-- Push/Telegram/Discord alerts on strong candidates
+- ~~Push/Telegram/Discord alerts on strong candidates~~ ✅ done (07-03)
+- ~~Real pre-market gap data~~ ✅ done (07-03, live intraday quotes)
 - Auto-analyze all candidates (not just on-demand)
 - Structured AI output (rating + entry/stop/target as fields)
 - News sentiment scoring; earnings-date proximity; more sources

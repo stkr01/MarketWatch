@@ -38,6 +38,17 @@ class Settings(BaseSettings):
     # Claude API
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 
+    # Alerts — notify on strong candidates (a candidate that also clears the
+    # tighter thresholds below). Only fires when at least one channel is set.
+    ALERTS_ENABLED: bool = os.getenv("ALERTS_ENABLED", "true").lower() == "true"
+    ALERT_GAP_THRESHOLD_PERCENT: float = float(os.getenv("ALERT_GAP_THRESHOLD_PERCENT", "4.0"))
+    ALERT_RVOL_THRESHOLD: float = float(os.getenv("ALERT_RVOL_THRESHOLD", "2.0"))
+    # Telegram: create a bot via @BotFather, then get your chat id.
+    TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
+    # Discord: a channel webhook URL.
+    DISCORD_WEBHOOK_URL: str = os.getenv("DISCORD_WEBHOOK_URL", "")
+
     # News sources
     NEWS_SOURCES: list = [
         "MarketWatch",

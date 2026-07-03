@@ -136,6 +136,28 @@ class OutcomesResponse(BaseModel):
     outcomes: list[OutcomeItem] = []
 
 
+class AlertItem(BaseModel):
+    symbol: str
+    gap_pct: Optional[float] = None
+    rvol: Optional[float] = None
+    price: Optional[float] = None
+    price_source: Optional[str] = None
+    channels: Optional[str] = None
+    status: str = "sent"
+    sent_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AlertsResponse(BaseModel):
+    enabled: bool = True
+    active: bool = False
+    channels: list[str] = []
+    gap_threshold_pct: float = 0.0
+    rvol_threshold: float = 0.0
+    alerts: list[AlertItem] = []
+
+
 class WatchlistItem(BaseModel):
     symbol: str
     name: Optional[str] = None

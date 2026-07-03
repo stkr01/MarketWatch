@@ -5,7 +5,7 @@ import logging
 
 from app.config import settings
 from app.db import Base, engine, ensure_schema
-from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing
+from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing, alerts
 from app.collectors.universe import seed_default_watchlist
 from app.scheduler import start_scheduler, stop_scheduler
 
@@ -67,6 +67,7 @@ app.include_router(economic.router, prefix="/api", tags=["economic"])
 app.include_router(watchlist.router, prefix="/api", tags=["watchlist"])
 app.include_router(outcomes.router, prefix="/api", tags=["outcomes"])
 app.include_router(briefing.router, prefix="/api", tags=["briefing"])
+app.include_router(alerts.router, prefix="/api", tags=["alerts"])
 
 
 @app.get("/health")
