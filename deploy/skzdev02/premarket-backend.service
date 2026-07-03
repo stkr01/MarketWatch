@@ -4,12 +4,11 @@ After=network.target
 
 [Service]
 Type=simple
-User=premarket
+User=adminskz
 WorkingDirectory=/opt/premarket/backend
-Environment="PATH=/opt/premarket/venv/bin"
 EnvironmentFile=/opt/premarket/backend/.env
-
-ExecStart=/opt/premarket/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Bind to localhost only; nginx (port 3000) reverse-proxies /api to it.
+ExecStart=/opt/premarket/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 Restart=always
 RestartSec=10
@@ -17,10 +16,10 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 
-# Security hardening
-PrivateTmp=true
+# Mild hardening. NOTE: do NOT add ReadOnlyPaths=/ — the app writes the SQLite
+# DB under /opt/premarket/data, and that would break it.
 NoNewPrivileges=true
-ReadOnlyPaths=/
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

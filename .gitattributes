@@ -1,0 +1,19 @@
+# Normalize line endings. Shell scripts and configs consumed on the Linux
+# server MUST be LF or bash/systemd/nginx will choke on CRLF.
+* text=auto eol=lf
+
+*.sh        text eol=lf
+deploy/**   text eol=lf
+*.service   text eol=lf
+*.conf      text eol=lf
+
+# Windows-only helpers stay CRLF
+*.ps1       text eol=crlf
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# Binary / never-normalize
+*.db        binary
+*.png       binary
+*.jpg       binary
+*.ico       binary
