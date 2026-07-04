@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import AIAnalysisPanel from './AIAnalysisPanel'
+import TradeTools from './TradeTools'
 import PriceChart from './PriceChart'
 import { yahooUrl, rsiZone, priceSourceBadge } from '../utils'
 
@@ -100,6 +101,8 @@ export default function StockDetail({ ticker }: Props) {
       )}
 
       <AIAnalysisPanel ticker={ticker} />
+
+      <TradeTools ticker={ticker} />
 
       <div style={{ marginTop: '1.75rem' }}>
         <div className="section-label">📰 Recent News{news.length ? ` (${news.length})` : ''}</div>
