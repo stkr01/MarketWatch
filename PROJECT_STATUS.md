@@ -210,9 +210,13 @@ alerts_sent†(id, symbol, scan_id, gap_pct, rvol, price, price_source,
 
 ## 🚀 Next Steps
 
-App is deployed and live. Candidate ideas from the backlog:
-- **News Analyser history** (the agreed "step two") — a `news_analyses` table + history view.
-- **Futures in the tape** (`ES=F`/`NQ=F`) — quick win for pre-market direction.
+App is deployed and live.
+
+**⭐ Agreed for next session (2026-07-06):**
+1. **News Analyser history** ("step two") — a `news_analyses` table (URL, title, summary, assets JSON, scores, **created_at date/time**) + a history view to browse past analyses.
+2. **Futures in the tape** (`ES=F`/`NQ=F`) — quick win, shows pre-market direction.
+
+Then, from the backlog:
 - **Paper-trade / position log** tied to the outcome tracking.
 - Sorting/filtering in the candidate table.
 
