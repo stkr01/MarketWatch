@@ -1119,25 +1119,26 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   font-size: 0.9rem;
 }
 
+/* Whole-row colour by session state. */
+.mkt-cell.state-open   { color: var(--up); }
+.mkt-cell.state-pre    { color: var(--high); }
+.mkt-cell.state-closed { color: var(--down); }
+
 .mkt-dot {
   align-self: center;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex: none;
+  background: currentColor;
 }
-.mkt-dot.open {
-  background: var(--up);
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
-}
-.mkt-dot.closed { background: var(--text-dim); }
+.mkt-cell.state-open .mkt-dot { box-shadow: 0 0 8px rgba(34, 197, 94, 0.9); }
+.mkt-cell.state-pre  .mkt-dot { box-shadow: 0 0 8px rgba(249, 115, 22, 0.9); }
 
 .mkt-flag { font-size: 1rem; }
-.mkt-city { font-weight: 700; letter-spacing: 0.02em; color: var(--text); }
-.mkt-time { font-weight: 600; color: var(--text-muted); }
-.mkt-note { font-size: 0.82rem; font-weight: 600; }
-.mkt-note.open { color: var(--up); }
-.mkt-note.closed { color: var(--text-dim); }
+.mkt-city { font-weight: 700; letter-spacing: 0.02em; color: inherit; }
+.mkt-time { font-weight: 600; color: inherit; }
+.mkt-note { font-size: 0.82rem; font-weight: 600; color: inherit; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {

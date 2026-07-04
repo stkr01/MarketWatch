@@ -1,28 +1,34 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Banner under the ticker tape: live wall-clock for each market, and in
- * parentheses either the countdown to the next open (when closed) or how long
- * it has already been open (when open). Regular-session hours, Mon–Fri.
+ * Banner under the ticker tape: live wall-clock for each market, colour-coded by
+ * session state — green = open, orange = pre-market, red = closed — with, in
+ * parentheses, how long it has been open / until it opens. Regular-session
+ * hours, Mon–Fri.
+ *
+ * Pre-market windows: New York uses the real US pre-market (04:00–09:30 ET);
+ * the others have no retail pre-market, so they use 1h before open as a proxy.
  *
  * Note: countdowns use local wall-clock arithmetic, so on the two DST-switch
- * days a year the "time until open" can be off by an hour for a few hours.
+ * days a year "time until open" can be off by an hour for a few hours. Tokyo's
+ * 11:30–12:30 lunch break is not modelled.
  */
+type SessionState = 'open' | 'pre' | 'closed'
+
 interface Market {
   city: string
   flag: string
   tz: string
-  openMin: number   // minutes from local midnight
-  closeMin: number
+  preMin: number    // pre-market start, minutes from local midnight
+  openMin: number   // regular open
+  closeMin: number  // regular close
 }
 
-// Regular-session hours in each market's local time. (Tokyo has a 11:30–12:30
-// lunch break we don't model — it just reads "open" straight through.)
 const MARKETS: Market[] = [
-  { city: 'Stockholm', flag: '🇸🇪', tz: 'Europe/Stockholm', openMin: 9 * 60, closeMin: 17 * 60 + 30 },
-  { city: 'London', flag: '🇬🇧', tz: 'Europe/London', openMin: 8 * 60, closeMin: 16 * 60 + 30 },
-  { city: 'New York', flag: '🇺🇸', tz: 'America/New_York', openMin: 9 * 60 + 30, closeMin: 16 * 60 },
-  { city: 'Tokyo', flag: '🇯🇵', tz: 'Asia/Tokyo', openMin: 9 * 60, closeMin: 15 * 60 },
+  { city: 'Stockholm', flag: '🇸🇪', tz: 'Europe/Stockholm', preMin: 8 * 60, openMin: 9 * 60, closeMin: 17 * 60 + 30 },
+  { city: 'London', flag: '🇬🇧', tz: 'Europe/London', preMin: 7 * 60, openMin: 8 * 60, closeMin: 16 * 60 + 30 },
+  { city: 'New York', flag: '🇺🇸', tz: 'America/New_York', preMin: 4 * 60, openMin: 9 * 60 + 30, closeMin: 16 * 60 },
+  { city: 'Tokyo', flag: '🇯🇵', tz: 'Asia/Tokyo', preMin: 8 * 60, openMin: 9 * 60, closeMin: 15 * 60 },
 ]
 
 // Mon=0 … Sun=6
@@ -53,16 +59,20 @@ function fmtDur(totalSec: number): string {
   return `${m}m ${String(s).padStart(2, '0')}s`
 }
 
-function computeState(m: Market, now: Date) {
+function computeState(m: Market, now: Date): { clock: string; state: SessionState; note: string } {
   const { hour, minute, second, day } = partsIn(m.tz, now)
   const nowSec = hour * 3600 + minute * 60 + second
+  const preSec = m.preMin * 60
   const openSec = m.openMin * 60
   const closeSec = m.closeMin * 60
   const isWeekday = day <= 4
   const clock = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`
 
   if (isWeekday && nowSec >= openSec && nowSec < closeSec) {
-    return { clock, open: true, note: `öppen ${fmtDur(nowSec - openSec)}` }
+    return { clock, state: 'open', note: `öppen ${fmtDur(nowSec - openSec)}` }
+  }
+  if (isWeekday && nowSec >= preSec && nowSec < openSec) {
+    return { clock, state: 'pre', note: `pre-market · öppnar om ${fmtDur(openSec - nowSec)}` }
   }
 
   // Closed → seconds until the next session open.
@@ -75,7 +85,7 @@ function computeState(m: Market, now: Date) {
     while (probe > 4) { probe = (probe + 1) % 7; addDays++ }   // skip Sat/Sun
     untilSec = addDays * 86400 + openSec - nowSec
   }
-  return { clock, open: false, note: `öppnar om ${fmtDur(untilSec)}` }
+  return { clock, state: 'closed', note: `öppnar om ${fmtDur(untilSec)}` }
 }
 
 export default function MarketClocks() {
@@ -91,12 +101,12 @@ export default function MarketClocks() {
       {MARKETS.map((m) => {
         const st = computeState(m, now)
         return (
-          <div className="mkt-cell" key={m.city}>
-            <span className={`mkt-dot ${st.open ? 'open' : 'closed'}`} />
+          <div className={`mkt-cell state-${st.state}`} key={m.city}>
+            <span className="mkt-dot" />
             <span className="mkt-flag">{m.flag}</span>
             <span className="mkt-city">{m.city}</span>
             <span className="mkt-time">{st.clock}</span>
-            <span className={`mkt-note ${st.open ? 'open' : 'closed'}`}>({st.note})</span>
+            <span className="mkt-note">({st.note})</span>
           </div>
         )
       })}
