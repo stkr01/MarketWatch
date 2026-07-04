@@ -1,24 +1,30 @@
-# Pre-Market Swing Trading Dashboard
+# Krantz Pre-Market AI Dashboard
 
-A live dashboard for monitoring pre-market swing trading opportunities on US equities (NASDAQ/NYSE).
+A live dashboard for monitoring pre-market swing trading opportunities on US equities (NASDAQ/NYSE), with Claude AI layered on top.
 
-**Status**: MVP Phase 0 (Setup Complete)
+**Status**: ✅ **Live on skzdev02** — http://skzdev02:3000 (Tailscale). GitHub: `stkr01/MarketWatch`.
 
 ## Features
 
-- 📊 Real-time market scanning every 5 minutes during pre-market hours
-- 🎯 Swing trading rule-based screening (gap%, volume, EMA100, news catalysts)
-- 🤖 On-demand Claude AI analysis of candidates
-- 📱 Live dashboard with polling updates
+- 📈 **Ticker tape** — indices (S&P 500, Nasdaq, Dow, Russell 2000, DAX, FTSE 100, VIX), EUR/USD, and your watchlist, live
+- 🕐 **World clocks** — Stockholm / London / New York / Tokyo, colour-coded by session (open / pre-market / closed)
+- 📊 Real-time scanning every 5 min during pre-market; rule-based screening (gap%, volume, EMA100, news)
+- 📉 **Charts** — sparklines in the candidate table + intraday price chart (pre/after-hours shaded) in the detail view
+- 🤖 **Claude AI** — per-ticker analysis, morning briefing, "why is it gapping?", ATR-based trade-plan
+- 🔥 **Market Movers** — auto-discovers movers beyond your watchlist (Yahoo screeners), one-click add
+- 📰 **News Analyser** — paste a URL → Swedish AI summary + affected assets + 1–5 impact score
+- 🔔 Telegram/Discord **alerts** on strong candidates (compact header bell)
+- 📊 Candidate outcome tracking (+1d/+1w returns, win rate) + AI morning briefing
 - 🔌 Tailscale private network access on skzdev02
 
 ## Tech Stack
 
 - **Backend**: Python + FastAPI + SQLAlchemy + SQLite
-- **Frontend**: React 18 + Vite + TypeScript
-- **AI**: Anthropic Claude API
-- **Data**: yfinance, feedparser, pandas
+- **Frontend**: React 18 + Vite + TypeScript + TanStack Query
+- **AI**: Anthropic Claude API (`claude-opus-4-8`)
+- **Data**: yfinance, feedparser, trafilatura, pandas
 - **Scheduler**: APScheduler (pre-market scans)
+- **Deploy**: systemd + nginx on skzdev02 (see `deploy/DEPLOYMENT.md`)
 
 ## Quick Start (Development)
 
@@ -73,34 +79,18 @@ API calls proxy to `http://localhost:8000`
 └── deploy/              # Deployment configs for skzdev02
 ```
 
-## Development Checklist
+## Status Checklist
 
-### Fas 1 — Data Pipeline
-- [ ] `collectors/universe.py` — Top 10 tickers
-- [ ] `collectors/market_data.py` — gap%, volume, EMA100
-- [ ] `collectors/news_feed.py` — feedparser integration
-- [ ] `screeners/swing_rules.py` — rule implementation
+- [x] **Fas 1** — Data pipeline (universe, market_data, news_feed, swing_rules)
+- [x] **Fas 2** — Backend API + APScheduler + Claude analysis
+- [x] **Fas 3** — Frontend dashboard (table, detail, AI panel, status bar)
+- [x] **Enhancements** — indicators, watchlist, outcomes, economic calendar, briefing
+- [x] **Live gap + alerts** — intraday pre-market gap, Telegram/Discord alerts
+- [x] **Fas 4** — Deploy to skzdev02 (systemd + nginx, live at :3000)
+- [x] **Feature wave** — ticker tape, world clocks, charts, AI trade tools, market movers, news analyser
+- [ ] News Analyser history (persist with date/time); futures in tape; paper-trading; CI
 
-### Fas 2 — Backend API + Scheduler
-- [ ] `scheduler.py` — APScheduler 5-min jobs
-- [ ] Implement all `/api` endpoints
-- [ ] `ai/claude_analyzer.py` — Claude on-demand analysis
-
-### Fas 3 — Frontend
-- [ ] CandidateTable polling + rendering
-- [ ] StockDetail drill-down
-- [ ] AIAnalysisPanel Claude results
-- [ ] ScanStatusBar UI
-
-### Fas 4 — Deploy
-- [ ] systemd unit file
-- [ ] nginx reverse proxy config
-- [ ] deploy.sh automation
-
-### Fas 5 — Polish
-- [ ] GitHub Actions CI
-- [ ] Error handling
-- [ ] README + docs
+See `PROJECT_STATUS.md` for the detailed, current state and `deploy/DEPLOYMENT.md` for the deploy runbook.
 
 ## Configuration
 
@@ -114,13 +104,18 @@ Key settings in `backend/app/config.py`:
 
 Override via `.env` file.
 
-## Next Steps
+## Deployment
 
-1. **Setup Anthropic API key** — Get key from https://console.anthropic.com
-2. **Confirm swing trading rules** — Gap%, volume, news thresholds
-3. **Start Fas 1** — Implement data collectors
-4. **Test locally** — Run backend + frontend in dev mode
-5. **Deploy to skzdev02** — Follow deploy/DEPLOY.md
+Live on **skzdev02** (Ubuntu, Tailscale): nginx serves the built frontend on port
+**3000** and reverse-proxies `/api` to the backend (uvicorn on `127.0.0.1:8000`,
+systemd unit `premarket-backend`). Redeploy after pushing to `main`:
+
+```bash
+ssh -i C:\dev\keys\skzdev02_key adminskz@100.94.139.84
+bash /opt/premarket/deploy/deploy.sh   # pull, deps, build, restart, reload nginx
+```
+
+Full one-time setup + redeploy details in [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md).
 
 ## License
 

@@ -2,19 +2,25 @@
 
 ## Project Overview
 
-Pre-Market Swing Trading Dashboard — a live, real-time monitoring tool for swing trading candidates (1–30 day holds) on US equities. Built for Stefan on skzdev02 (Azure VM, private Tailscale network).
+**Krantz Pre-Market AI Dashboard** — a live, real-time monitoring tool for swing trading candidates (1–30 day holds) on US equities. Built for Stefan on skzdev02 (Azure VM, private Tailscale network). **Deployed & live at http://skzdev02:3000.** GitHub: `stkr01/MarketWatch`.
 
-**Goal**: Replace daily email reports with a live dashboard that continuously scans for swing trading catalysts (gap%, volume, EMA100, news).
+**Goal**: Replace daily email reports with a live dashboard that continuously scans for swing trading catalysts (gap%, volume, EMA100, news) and layers Claude AI on top.
 
-**MVP Status**: Fas 0–3 complete + dashboard enhancements (indicators, watchlist, outcome tracking, economic calendar, AI morning briefing). Fas 4 (deploy to skzdev02) pending. See `PROJECT_STATUS.md` for the current, detailed state and resume guide.
+**Status**: **Fas 0–4 complete (live on skzdev02)** + a Session-2 feature wave. See `PROJECT_STATUS.md` for the detailed state and `deploy/DEPLOYMENT.md` for the runbook.
 
 **Implemented feature set** (beyond the original MVP):
-- Technical indicators: RSI(14), ATR(14)/ATR%, RVOL (in `market_data.py`, stored on `scan_results`)
-- DB-backed **watchlist** (`Ticker.is_active`) — scan universe is user-managed via `/api/watchlist`
+- Technical indicators: RSI(14), ATR(14)/ATR%, RVOL (`market_data.py`, stored on `scan_results`)
+- DB-backed **watchlist** (`Ticker.is_active`) — scan universe user-managed via `/api/watchlist`
 - **Candidate outcome tracking** — +1d/+1w returns, win rate (`candidate_outcomes`, `outcomes.py`)
 - **US economic calendar** — faireconomy/ForexFactory feed, today's USD events (`collectors/economic_calendar.py`)
-- **AI Morning Briefing** — Claude summary of candidates + calendar, cached daily (`ai/briefing.py`, `briefings` table)
-- Frontend redesign: glassmorphism theme, ET market clock + session status, Yahoo Finance ticker links
+- **AI Morning Briefing** — Claude summary of candidates + calendar, cached daily (`ai/briefing.py`)
+- **Live pre-market gap** (intraday `prepost` quotes) + **Telegram/Discord alerts** on strong candidates
+- **Ticker tape** (indices incl. DAX/FTSE + FX + watchlist) and **world-clock banner** (Sto/London/NY/Tokyo, session-coloured)
+- **Charts** — inline-SVG sparklines in the table + intraday price chart in the detail view
+- **AI trade tools** — "why is it gapping?" + ATR-based trade-plan (entry/stop/target at 2R)
+- **Market Movers** — auto-discovery via Yahoo screeners, one-click add-to-watchlist
+- **News Analyser** — URL/text → Swedish summary + affected assets + 1–5 impact score (trafilatura + Claude)
+- UX: click any ticker → in-app detail (not Yahoo); top ActionBar; alerts as a header bell widget
 
 ## Key Architecture Decisions
 
@@ -70,26 +76,29 @@ Outcome tracking → outcomes.py evaluates +1d/+1w returns of past candidates
 - `backend/app/config.py` — Environment-based configuration
 - `backend/app/db.py` — engine/session + `ensure_schema()` idempotent SQLite column migrations
 - `backend/app/models.py` — ORM (Ticker, Scan, ScanResult, NewsItem, AIAnalysis, CandidateOutcome, Briefing)
-- `backend/app/routers/` — REST endpoints (candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing)
-- `backend/app/collectors/` — Data fetching (market_data w/ indicators, news_feed w/ Yahoo per-ticker RSS, universe w/ DB watchlist, economic_calendar)
+- `backend/app/routers/` — REST endpoints: candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing, alerts, settings, **ticker_tape**, **charts**, **movers**, **news_analyze**
+- `backend/app/collectors/` — market_data (indicators), news_feed (Yahoo RSS), universe (DB watchlist), economic_calendar, **ticker_tape** (banner quotes), **chart_data** (intraday + sparklines), **movers** (Yahoo screeners), **article** (URL → text via trafilatura)
 - `backend/app/screeners/swing_rules.py` — Rule-based filtering
 - `backend/app/outcomes.py` — candidate outcome recording + return evaluation
-- `backend/app/ai/claude_analyzer.py` — per-ticker Claude analysis
+- `backend/app/alerts.py` — strong-candidate alerts (Telegram/Discord, per-day dedup)
+- `backend/app/ai/claude_analyzer.py` — per-ticker analysis + `explain_gap` + `generate_trade_plan`
 - `backend/app/ai/briefing.py` — Claude morning briefing generator
+- `backend/app/ai/news_analyzer.py` — news article → summary + affected assets + score
 - `backend/app/scheduler.py` — APScheduler job setup
 
 ### Frontend
-- `frontend/src/pages/Dashboard.tsx` — Main page (header+clock, briefing, stat bar, 2-col grid)
-- `frontend/src/components/` — CandidateTable, StockDetail, AIAnalysisPanel, ScanStatusBar, MarketClock, EconomicCalendar, Watchlist, ScreenerPerformance, BriefingCard
-- `frontend/src/utils.ts` — `yahooUrl()`, `marketSession()`, `rsiZone()`
+- `frontend/src/pages/Dashboard.tsx` — Main page (header+clock+AlertsBell, TickerTape, MarketClocks, ActionBar, briefing, stat bar, 2-col grid, NewsAnalyzerModal); shared `selectTicker` opens the in-app detail
+- `frontend/src/components/` — CandidateTable(+Sparkline), StockDetail(+PriceChart+TradeTools), AIAnalysisPanel, ScanStatusBar, MarketClock, EconomicCalendar, Watchlist, ScreenerPerformance, BriefingCard, **TickerTape**, **MarketClocks**, **Sparkline**, **PriceChart**, **TradeTools**, **MarketMovers**, **ActionBar**, **NewsAnalyzerModal**, **AlertsBell**
+- `frontend/src/utils.ts` — `yahooUrl()`, `marketSession()`, `rsiZone()`, `priceSourceBadge()`
 - `frontend/src/api/client.ts` — Axios API client
-- `frontend/src/index.css` — redesigned dark/glassmorphism theme
+- `frontend/src/index.css` — dark/glassmorphism theme
 - `frontend/vite.config.ts` — Dev proxy to localhost:8000
 
-### Deploy
-- `deploy/skzdev02/premarket-backend.service` — systemd unit
-- `deploy/skzdev02/nginx.conf.snippet` — reverse proxy config
-- `deploy/deploy.sh` — automated deploy script
+### Deploy (live)
+- `deploy/skzdev02/premarket-backend.service` — systemd unit (uvicorn on 127.0.0.1:8000)
+- `deploy/skzdev02/premarket.conf` — nginx site, port 3000, `/api` reverse proxy
+- `deploy/deploy.sh` — redeploy script (pull, deps, build, restart, reload nginx)
+- `deploy/DEPLOYMENT.md` — full one-time setup + redeploy runbook
 
 ## Swing Trading Rules (Initial Defaults)
 
@@ -114,10 +123,10 @@ ai_analyses(id, ticker_id, requested_at, prompt_version, response, usage_tokens,
 
 ## Claude API Integration
 
-- **Model**: `claude-opus-4-8` (on-demand, can switch to `claude-sonnet-4-6` for cost savings)
-- **Prompt**: Contextual — combines gap%, volume, EMA100, recent news, asks for 2–3 sentence swing trade assessment
-- **Cost**: Per-token usage. Stefan should monitor via Anthropic console.
-- **Cache**: Results stored in `ai_analyses` table. Re-run on demand.
+- **Model**: `claude-opus-4-8` across all AI features (per-ticker analysis, morning briefing, gap explanation, trade-plan, news analysis). Could switch to a Sonnet model for cost savings on high-volume features.
+- **AI features**: (1) per-ticker analysis, (2) morning briefing, (3) "why is it gapping?", (4) ATR-based trade-plan commentary, (5) News Analyser (Swedish summary + affected assets + 1–5 score). Each on-demand button shows token usage.
+- **Cost**: Per-token usage; monitor via the Anthropic console. Every AI action costs tokens.
+- **Cache**: Per-ticker analysis cached in `ai_analyses`; briefing cached daily in `briefings`. Trade-plan/why/news are computed on demand (not persisted yet).
 
 ## Frontend React Patterns
 
@@ -154,21 +163,17 @@ ai_analyses(id, ticker_id, requested_at, prompt_version, response, usage_tokens,
 
 > Detailed, current state + resume guide live in `PROJECT_STATUS.md`.
 
-**Fas 0** (Setup) — ✓ Complete
-**Fas 1** (Data Pipeline) — ✓ Complete
-**Fas 2** (Backend API + Scheduler) — ✓ Complete
-**Fas 3** (Frontend Dashboard) — ✓ Complete
-**Enhancements** (indicators, watchlist, outcome tracking, economic calendar, AI briefing, redesign) — ✓ Complete (branch `feature/dashboard-enhancements`)
+**Fas 0–3** (Setup, Pipeline, API+Scheduler, Frontend) — ✓ Complete
+**Enhancements** (indicators, watchlist, outcomes, economic calendar, AI briefing, redesign) — ✓ Complete
+**Live pre-market gap + alerts** — ✓ Complete (07-03)
+**Fas 4** (Deploy to skzdev02) — ✓ **Complete (07-04)**, live at http://skzdev02:3000
+**Session-2 feature wave** — ✓ Complete (07-04/05): ticker tape, world clocks, charts, AI trade tools, market movers, news analyser, click-to-detail, action bar, alerts bell
 
-**Fas 4** (Deploy) — **NEXT / not started**
-  - Set up systemd, nginx on skzdev02
-  - Configure deploy script (`deploy/deploy.sh`)
-  - Separate dev/prod instances; prod `.env` with `DEBUG=false`
-
-**Fas 5** (Polish / backlog)
-  - Real pre-market quotes (Finnhub/Polygon/Alpaca) — current gap is daily open vs prev close
-  - Alerts (Telegram/Discord), auto-analyze all candidates, structured AI output
-  - GitHub Actions CI; rate-limit/API error handling; README + deploy docs
+**Next / backlog**
+  - News Analyser history (persist analyses with date/time) — agreed "step two"
+  - Futures in the tape (`ES=F`/`NQ=F`); paper-trading / position log
+  - Auto-analyze all candidates; earnings-date proximity; more news sources
+  - GitHub Actions CI; JWT auth for off-Tailscale access
 
 ## Important Notes
 
