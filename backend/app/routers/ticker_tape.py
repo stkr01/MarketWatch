@@ -28,6 +28,8 @@ MARKET_SYMBOLS: list[tuple[str, str, str]] = [
     ("^IXIC", "Nasdaq", "index"),
     ("^DJI", "Dow Jones", "index"),
     ("^RUT", "Russell 2000", "index"),
+    ("^GDAXI", "DAX (GER40)", "index"),
+    ("^FTSE", "FTSE 100 (UK100)", "index"),
     ("^VIX", "VIX", "index"),
     ("EURUSD=X", "EUR/USD", "fx"),
 ]
