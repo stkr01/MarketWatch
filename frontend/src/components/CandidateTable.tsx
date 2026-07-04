@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
-import { yahooUrl, rsiZone, priceSourceBadge } from '../utils'
+import { rsiZone, priceSourceBadge } from '../utils'
 import Sparkline from './Sparkline'
 
 interface Props {
@@ -63,16 +63,7 @@ export default function CandidateTable({ onSelectTicker, selectedTicker }: Props
               onClick={() => onSelectTicker(c.ticker.symbol)}
             >
               <td>
-                <a
-                  className="ticker-link"
-                  href={yahooUrl(c.ticker.symbol)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  title="Open on Yahoo Finance"
-                >
-                  {c.ticker.symbol}<span className="ext">↗</span>
-                </a>
+                <span className="ticker-link" title="Visa detaljer">{c.ticker.symbol}</span>
               </td>
               <td className="num">
                 <span className={`pill ${up ? 'pill-up' : 'pill-down'}`}>

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
-import { yahooUrl } from '../utils'
 
 interface WlItem { symbol: string; name?: string; exchange?: string }
 
-export default function Watchlist() {
+interface Props { onSelectTicker?: (sym: string) => void }
+
+export default function Watchlist({ onSelectTicker }: Props) {
   const qc = useQueryClient()
   const [symbol, setSymbol] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -70,9 +71,14 @@ export default function Watchlist() {
           <div className="wl-chips">
             {items.map((it) => (
               <span className="wl-chip" key={it.symbol}>
-                <a href={yahooUrl(it.symbol)} target="_blank" rel="noopener noreferrer" title="Open on Yahoo Finance">
+                <button
+                  type="button"
+                  className="wl-chip-sym"
+                  title={`Visa detaljer för ${it.symbol}`}
+                  onClick={() => onSelectTicker?.(it.symbol)}
+                >
                   {it.symbol}
-                </a>
+                </button>
                 <button
                   title={`Remove ${it.symbol}`}
                   onClick={() => remove.mutate(it.symbol)}

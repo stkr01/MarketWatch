@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import CandidateTable from '../components/CandidateTable'
 import StockDetail from '../components/StockDetail'
 import ScanStatusBar from '../components/ScanStatusBar'
@@ -16,6 +16,16 @@ import { yahooUrl } from '../utils'
 
 export default function Dashboard() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+
+  // Selecting a ticker anywhere opens the in-app detail panel and scrolls to it.
+  const selectTicker = (sym: string) => setSelectedTicker(sym.toUpperCase())
+
+  useEffect(() => {
+    if (selectedTicker) {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [selectedTicker])
 
   return (
     <div className="dashboard">
@@ -45,13 +55,13 @@ export default function Dashboard() {
             <div className="panel-title">🎯 Current Candidates</div>
           </div>
           <div className="panel-body">
-            <CandidateTable onSelectTicker={setSelectedTicker} selectedTicker={selectedTicker} />
+            <CandidateTable onSelectTicker={selectTicker} selectedTicker={selectedTicker} />
           </div>
         </main>
 
         <aside>
-          <Watchlist />
-          <MarketMovers />
+          <Watchlist onSelectTicker={selectTicker} />
+          <MarketMovers onSelectTicker={selectTicker} />
           <SettingsPanel />
           <AlertsPanel />
           <ScreenerPerformance />
@@ -60,7 +70,7 @@ export default function Dashboard() {
       </div>
 
       {selectedTicker && (
-        <div className="panel fade-in" style={{ marginTop: '1.5rem' }}>
+        <div className="panel fade-in" ref={detailRef} style={{ marginTop: '1.5rem' }}>
           <div className="panel-header">
             <div className="panel-title">
               📊

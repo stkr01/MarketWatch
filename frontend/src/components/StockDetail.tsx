@@ -14,6 +14,7 @@ export default function StockDetail({ ticker }: Props) {
     queryKey: ['stock', ticker],
     queryFn: () => apiClient.get(`/stock/${ticker}`).then(r => r.data),
     enabled: !!ticker,
+    retry: false,   // ticker may not be in the DB yet (e.g. an un-added mover)
   })
 
   const { data: metrics } = useQuery({
@@ -50,6 +51,13 @@ export default function StockDetail({ ticker }: Props) {
 
       <div className="section-label" style={{ marginBottom: '0.6rem' }}>📈 Intraday (inkl. pre-market)</div>
       <PriceChart ticker={ticker} />
+
+      {!metrics && (
+        <p className="detail-hint">
+          Inga scan-mätvärden än för {ticker}. Lägg till i watchlist och kör en scan
+          för RVOL/RSI/ATR, EMA och AI-verktygen.
+        </p>
+      )}
 
       {metrics && (
         <div className="metric-grid" style={{ marginTop: '1.5rem' }}>

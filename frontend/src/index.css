@@ -605,6 +605,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .ticker-link:hover { color: #bae6fd; text-decoration: underline; }
 .ticker-link .ext { font-size: 0.68rem; opacity: 0.6; }
+td .ticker-link { cursor: pointer; }
 
 /* Pills & badges */
 .pill {
@@ -698,6 +699,18 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .wl-chip a { color: #93c5fd; text-decoration: none; }
 .wl-chip a:hover { color: #bfdbfe; text-decoration: underline; }
+.wl-chip .wl-chip-sym {
+  background: transparent;
+  border: none;
+  color: #93c5fd;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  width: auto; height: auto;
+  border-radius: 0;
+  cursor: pointer;
+}
+.wl-chip .wl-chip-sym:hover { background: transparent; color: #bfdbfe; text-decoration: underline; box-shadow: none; }
 .wl-chip button {
   background: transparent;
   color: var(--text-dim);
@@ -1249,6 +1262,16 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .tt-level.stop b   { color: var(--down); }
 .tt-level.target b { color: var(--up); }
 
+.detail-hint {
+  margin-top: 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: rgba(120, 140, 180, 0.06);
+}
+
 /* ---------- Market movers ---------- */
 .mv-list { display: flex; flex-direction: column; gap: 0.35rem; }
 .mv-row {
@@ -1264,7 +1287,17 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   font-variant-numeric: tabular-nums;
 }
 .mv-main { display: flex; flex-direction: column; min-width: 0; }
-.mv-sym { font-weight: 700; color: var(--accent); text-decoration: none; }
+.mv-sym {
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: inherit;
+}
 .mv-sym:hover { text-decoration: underline; }
 .mv-src { font-size: 0.68rem; color: var(--text-dim); }
 .mv-px { color: var(--text-muted); }

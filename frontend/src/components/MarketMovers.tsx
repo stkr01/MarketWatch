@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
-import { yahooUrl } from '../utils'
 
 interface Mover {
   symbol: string
@@ -19,7 +18,9 @@ const SRC_LABEL: Record<string, string> = {
   gainer: '▲ Gainer', loser: '▼ Loser', active: '⚡ Active', 'small-cap': 'SC',
 }
 
-export default function MarketMovers() {
+interface Props { onSelectTicker?: (sym: string) => void }
+
+export default function MarketMovers({ onSelectTicker }: Props) {
   const qc = useQueryClient()
 
   const { data, isLoading } = useQuery<{ as_of: string | null; movers: Mover[] }>({
@@ -64,9 +65,14 @@ export default function MarketMovers() {
               return (
                 <div className="mv-row" key={m.symbol}>
                   <div className="mv-main">
-                    <a className="mv-sym" href={yahooUrl(m.symbol)} target="_blank" rel="noopener noreferrer" title={m.name}>
-                      {m.symbol}<span className="ext">↗</span>
-                    </a>
+                    <button
+                      type="button"
+                      className="mv-sym"
+                      title={`Visa detaljer för ${m.symbol} · ${m.name}`}
+                      onClick={() => onSelectTicker?.(m.symbol)}
+                    >
+                      {m.symbol}
+                    </button>
                     <span className="mv-src" title={`Källa: ${m.source} · ${m.session}`}>{SRC_LABEL[m.source] ?? m.source}</span>
                   </div>
                   <span className={`pill ${up ? 'pill-up' : 'pill-down'}`}>
