@@ -65,12 +65,12 @@ export default function Dashboard() {
         </main>
 
         <aside>
-          <Watchlist onSelectTicker={selectTicker} />
+          <ScreenerPerformance />
+          <EconomicCalendar />
           <MarketMovers onSelectTicker={selectTicker} />
           <SettingsPanel />
           <AlertsPanel />
-          <ScreenerPerformance />
-          <EconomicCalendar />
+          <Watchlist onSelectTicker={selectTicker} />
         </aside>
       </div>
 
