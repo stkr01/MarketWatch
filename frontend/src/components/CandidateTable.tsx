@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import { yahooUrl, rsiZone, priceSourceBadge } from '../utils'
+import Sparkline from './Sparkline'
 
 interface Props {
   onSelectTicker: (ticker: string) => void
@@ -13,6 +14,13 @@ export default function CandidateTable({ onSelectTicker, selectedTicker }: Props
     queryFn: () => apiClient.get('/candidates').then(r => r.data),
     refetchInterval: 30000,
   })
+
+  const { data: spark } = useQuery({
+    queryKey: ['sparklines'],
+    queryFn: () => apiClient.get('/sparklines').then(r => r.data),
+    refetchInterval: 60000,
+  })
+  const series: Record<string, number[]> = spark?.series ?? {}
 
   if (isLoading) return <div className="loading"><span className="spinner" />Loading candidates…</div>
   if (error) return <div className="empty" style={{ color: '#fda4af' }}>Error loading candidates</div>
@@ -33,6 +41,7 @@ export default function CandidateTable({ onSelectTicker, selectedTicker }: Props
           <th>Ticker</th>
           <th className="num">Gap %</th>
           <th className="num">Price</th>
+          <th className="center">Trend</th>
           <th className="num">Volume</th>
           <th className="num">RSI</th>
           <th className="center">EMA100</th>
@@ -78,6 +87,9 @@ export default function CandidateTable({ onSelectTicker, selectedTicker }: Props
                     <span className="src-badge" title={b.title} style={{ marginLeft: 4 }}>{b.label}</span>
                   ) : null
                 })()}
+              </td>
+              <td className="center spark-cell">
+                <Sparkline data={series[c.ticker.symbol]} baseline={sr.previous_close} />
               </td>
               <td className="num">
                 <div className="vol-wrap">

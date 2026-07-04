@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import AIAnalysisPanel from './AIAnalysisPanel'
+import PriceChart from './PriceChart'
 import { yahooUrl, rsiZone, priceSourceBadge } from '../utils'
 
 interface Props {
@@ -46,8 +47,11 @@ export default function StockDetail({ ticker }: Props) {
         </a>
       </div>
 
+      <div className="section-label" style={{ marginBottom: '0.6rem' }}>📈 Intraday (inkl. pre-market)</div>
+      <PriceChart ticker={ticker} />
+
       {metrics && (
-        <div className="metric-grid">
+        <div className="metric-grid" style={{ marginTop: '1.5rem' }}>
           <div className="metric">
             <div className="metric-label">Gap</div>
             <div className="metric-val" style={{ color: metrics.gap_pct >= 0 ? 'var(--up)' : 'var(--down)' }}>

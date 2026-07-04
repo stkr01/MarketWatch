@@ -1140,6 +1140,49 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .mkt-time { font-weight: 600; color: inherit; }
 .mkt-note { font-size: 0.82rem; font-weight: 600; color: inherit; }
 
+/* ---------- Sparklines & price chart ---------- */
+.sparkline { display: block; overflow: visible; }
+.spark-empty { color: var(--text-dim); font-size: 0.85rem; }
+.spark-cell { width: 100px; }
+
+.price-chart-wrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem 0.5rem;
+  background: rgba(10, 16, 30, 0.55);
+}
+.price-chart {
+  display: block;
+  width: 100%;
+  height: 180px;
+}
+.chart-session { fill: rgba(120, 140, 180, 0.10); }
+.chart-prevclose {
+  stroke: var(--text-dim);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+.chart-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 180px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  justify-content: center;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.chart-legend .chart-hint { color: var(--text-dim); }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
   .dashboard { padding: 1.25rem 1rem 3rem; }
@@ -1147,4 +1190,5 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   .data-table th, .data-table td { padding: 0.7rem 0.9rem; }
   .econ-item { padding: 0.7rem 0.9rem; }
   .market-clocks { gap: 0.5rem 1.5rem; }
+  .spark-cell { display: none; }
 }

@@ -5,7 +5,7 @@ import logging
 
 from app.config import settings
 from app.db import Base, engine, ensure_schema
-from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing, alerts, ticker_tape, settings as settings_router
+from app.routers import candidates, stock, analyze, scan, news, economic, watchlist, outcomes, briefing, alerts, ticker_tape, charts, settings as settings_router
 from app.collectors.universe import seed_default_watchlist
 from app import runtime_config
 from app.scheduler import start_scheduler, stop_scheduler
@@ -71,6 +71,7 @@ app.include_router(outcomes.router, prefix="/api", tags=["outcomes"])
 app.include_router(briefing.router, prefix="/api", tags=["briefing"])
 app.include_router(alerts.router, prefix="/api", tags=["alerts"])
 app.include_router(ticker_tape.router, prefix="/api", tags=["ticker-tape"])
+app.include_router(charts.router, prefix="/api", tags=["charts"])
 app.include_router(settings_router.router, prefix="/api", tags=["settings"])
 
 
