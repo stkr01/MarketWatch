@@ -5,6 +5,7 @@ import ScanStatusBar from '../components/ScanStatusBar'
 import EconomicCalendar from '../components/EconomicCalendar'
 import MarketClock from '../components/MarketClock'
 import Watchlist from '../components/Watchlist'
+import MarketMovers from '../components/MarketMovers'
 import TickerTape from '../components/TickerTape'
 import MarketClocks from '../components/MarketClocks'
 import ScreenerPerformance from '../components/ScreenerPerformance'
@@ -50,6 +51,7 @@ export default function Dashboard() {
 
         <aside>
           <Watchlist />
+          <MarketMovers />
           <SettingsPanel />
           <AlertsPanel />
           <ScreenerPerformance />

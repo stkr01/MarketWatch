@@ -1249,6 +1249,39 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .tt-level.stop b   { color: var(--down); }
 .tt-level.target b { color: var(--up); }
 
+/* ---------- Market movers ---------- */
+.mv-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.mv-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.mv-main { display: flex; flex-direction: column; min-width: 0; }
+.mv-sym { font-weight: 700; color: var(--accent); text-decoration: none; }
+.mv-sym:hover { text-decoration: underline; }
+.mv-src { font-size: 0.68rem; color: var(--text-dim); }
+.mv-px { color: var(--text-muted); }
+.mv-rvol { color: var(--text-dim); font-size: 0.8rem; }
+.mv-add {
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--up-soft);
+  color: var(--up);
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer;
+}
+.mv-add:hover:not(:disabled) { background: rgba(34, 197, 94, 0.24); }
+.mv-add:disabled { opacity: 0.5; cursor: default; color: var(--text-dim); background: transparent; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
   .dashboard { padding: 1.25rem 1rem 3rem; }
