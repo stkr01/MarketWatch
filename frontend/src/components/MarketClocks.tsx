@@ -16,9 +16,13 @@ interface Market {
   closeMin: number
 }
 
+// Regular-session hours in each market's local time. (Tokyo has a 11:30–12:30
+// lunch break we don't model — it just reads "open" straight through.)
 const MARKETS: Market[] = [
   { city: 'Stockholm', flag: '🇸🇪', tz: 'Europe/Stockholm', openMin: 9 * 60, closeMin: 17 * 60 + 30 },
+  { city: 'London', flag: '🇬🇧', tz: 'Europe/London', openMin: 8 * 60, closeMin: 16 * 60 + 30 },
   { city: 'New York', flag: '🇺🇸', tz: 'America/New_York', openMin: 9 * 60 + 30, closeMin: 16 * 60 },
+  { city: 'Tokyo', flag: '🇯🇵', tz: 'Asia/Tokyo', openMin: 9 * 60, closeMin: 15 * 60 },
 ]
 
 // Mon=0 … Sun=6
