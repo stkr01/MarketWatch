@@ -1,11 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useIsMutating } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import { useEffect, useState } from 'react'
-import TraceButton from './TraceButton'
 import StatusBox from './StatusBox'
 
 export default function ScanStatusBar() {
-  const queryClient = useQueryClient()
   const [countdown, setCountdown] = useState<string>('—')
 
   const { data: status } = useQuery({
@@ -20,17 +18,8 @@ export default function ScanStatusBar() {
     refetchInterval: 30000,
   })
 
-  const { mutate: triggerScan, isPending } = useMutation({
-    mutationFn: () => apiClient.post('/scan'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['candidates'] })
-      queryClient.invalidateQueries({ queryKey: ['scan-status'] })
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['candidates'] })
-        queryClient.refetchQueries({ queryKey: ['scan-status'] })
-      }, 15000)
-    },
-  })
+  // Scan is triggered from the top ActionBar; observe its pending state here.
+  const isPending = useIsMutating({ mutationKey: ['scan'] }) > 0
 
   useEffect(() => {
     if (!status?.next_scan) {
@@ -79,11 +68,6 @@ export default function ScanStatusBar() {
             title={isPending ? 'Scanning' : 'Online'}
           />
         </div>
-      </div>
-      <div className="scan-action">
-        <TraceButton variant="green" always onClick={() => triggerScan()} disabled={isPending}>
-          {isPending ? <><span className="spinner" />Scanning…</> : <>◈ Scan Now</>}
-        </TraceButton>
       </div>
     </div>
   )

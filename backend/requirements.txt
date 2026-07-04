@@ -13,3 +13,4 @@ anthropic
 pytest
 httpx
 feedparser>=6.0.1
+trafilatura

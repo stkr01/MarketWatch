@@ -12,10 +12,13 @@ import ScreenerPerformance from '../components/ScreenerPerformance'
 import AlertsPanel from '../components/AlertsPanel'
 import SettingsPanel from '../components/SettingsPanel'
 import BriefingCard from '../components/BriefingCard'
+import ActionBar from '../components/ActionBar'
+import NewsAnalyzerModal from '../components/NewsAnalyzerModal'
 import { yahooUrl } from '../utils'
 
 export default function Dashboard() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
+  const [newsOpen, setNewsOpen] = useState(false)
   const detailRef = useRef<HTMLDivElement>(null)
 
   // Selecting a ticker anywhere opens the in-app detail panel and scrolls to it.
@@ -44,6 +47,8 @@ export default function Dashboard() {
         </div>
         <MarketClock />
       </header>
+
+      <ActionBar onOpenNews={() => setNewsOpen(true)} />
 
       <ScanStatusBar />
 
@@ -91,6 +96,13 @@ export default function Dashboard() {
             <StockDetail ticker={selectedTicker} />
           </div>
         </div>
+      )}
+
+      {newsOpen && (
+        <NewsAnalyzerModal
+          onClose={() => setNewsOpen(false)}
+          onSelectTicker={(sym) => { setNewsOpen(false); selectTicker(sym) }}
+        />
       )}
     </div>
   )
