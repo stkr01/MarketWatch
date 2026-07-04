@@ -25,7 +25,7 @@ export default function Dashboard() {
         <div>
           <h1 className="app-title">
             <span>📈</span>
-            <span className="grad">Pre-Market Swing Dashboard</span>
+            <span className="grad">Krantz Pre-Market AI Dashboard</span>
           </h1>
           <p className="app-subtitle">
             Real-time candidate screening with Claude AI analysis
