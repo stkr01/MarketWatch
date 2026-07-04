@@ -9,7 +9,7 @@ import MarketMovers from '../components/MarketMovers'
 import TickerTape from '../components/TickerTape'
 import MarketClocks from '../components/MarketClocks'
 import ScreenerPerformance from '../components/ScreenerPerformance'
-import AlertsPanel from '../components/AlertsPanel'
+import AlertsBell from '../components/AlertsBell'
 import SettingsPanel from '../components/SettingsPanel'
 import BriefingCard from '../components/BriefingCard'
 import ActionBar from '../components/ActionBar'
@@ -45,7 +45,10 @@ export default function Dashboard() {
             Real-time candidate screening with Claude AI analysis
           </p>
         </div>
-        <MarketClock />
+        <div className="header-right">
+          <AlertsBell onSelectTicker={selectTicker} />
+          <MarketClock />
+        </div>
       </header>
 
       <ActionBar onOpenNews={() => setNewsOpen(true)} />
@@ -69,7 +72,6 @@ export default function Dashboard() {
           <EconomicCalendar />
           <MarketMovers onSelectTicker={selectTicker} />
           <SettingsPanel />
-          <AlertsPanel />
           <Watchlist onSelectTicker={selectTicker} />
         </aside>
       </div>
