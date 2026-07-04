@@ -1025,6 +1025,77 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   to { opacity: 1; transform: none; }
 }
 
+/* ---------- Live ticker tape (classic scrolling stock banner) ---------- */
+.ticker-tape {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-bottom: 1.5rem;
+  padding: 0.55rem 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(10, 16, 30, 0.96), rgba(12, 20, 38, 0.96));
+  box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.55), var(--shadow);
+  /* Fade the strip out at both edges so items scroll in/out cleanly. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+}
+
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding-left: 2.5rem;
+  animation-name: tape-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Pause on hover so you can read a quote as it goes by. */
+.ticker-tape:hover .ticker-track { animation-play-state: paused; }
+
+@keyframes tape-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.tape-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tape-sym {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+.tape-price {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tape-chg {
+  font-weight: 700;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.22rem;
+}
+.tape-chg.up   { color: var(--up); }
+.tape-chg.down { color: var(--down); }
+.tape-arrow    { font-size: 0.72rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+  .ticker-tape { overflow-x: auto; }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
   .dashboard { padding: 1.25rem 1rem 3rem; }

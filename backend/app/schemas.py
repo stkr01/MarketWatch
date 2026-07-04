@@ -170,6 +170,20 @@ class WatchlistAdd(BaseModel):
     symbol: str
 
 
+class TapeQuote(BaseModel):
+    symbol: str
+    label: str
+    kind: str  # "index" | "fx" | "watchlist"
+    price: Optional[float] = None
+    change: Optional[float] = None
+    change_pct: Optional[float] = None
+
+
+class TickerTapeResponse(BaseModel):
+    as_of: Optional[datetime] = None
+    quotes: list[TapeQuote] = []
+
+
 class EconomicEventResponse(BaseModel):
     time: str
     datetime: datetime

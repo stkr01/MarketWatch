@@ -5,6 +5,7 @@ import ScanStatusBar from '../components/ScanStatusBar'
 import EconomicCalendar from '../components/EconomicCalendar'
 import MarketClock from '../components/MarketClock'
 import Watchlist from '../components/Watchlist'
+import TickerTape from '../components/TickerTape'
 import ScreenerPerformance from '../components/ScreenerPerformance'
 import AlertsPanel from '../components/AlertsPanel'
 import SettingsPanel from '../components/SettingsPanel'
@@ -16,6 +17,8 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
+      <TickerTape />
+
       <header className="app-header">
         <div>
           <h1 className="app-title">
