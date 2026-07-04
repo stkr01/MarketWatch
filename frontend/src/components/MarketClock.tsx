@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { marketSession } from '../utils'
 
 export default function MarketClock() {
   const [now, setNow] = useState(new Date())
@@ -24,18 +23,12 @@ export default function MarketClock() {
     day: 'numeric',
   }).format(now)
 
-  const session = marketSession(now)
-
   return (
     <div className="market-clock">
       <div className="clock-main">
         <div className="clock-time">{time}</div>
         <div className="clock-zone">{date} · ET</div>
       </div>
-      <span className={`session-pill ${session.cls}`}>
-        <span className="dot" />
-        {session.label}
-      </span>
     </div>
   )
 }
