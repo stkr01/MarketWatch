@@ -18,17 +18,25 @@ import { yahooUrl } from '../utils'
 
 export default function Dashboard() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
+  const [scrollNonce, setScrollNonce] = useState(0)
   const [newsOpen, setNewsOpen] = useState(false)
   const detailRef = useRef<HTMLDivElement>(null)
 
   // Selecting a ticker anywhere opens the in-app detail panel and scrolls to it.
-  const selectTicker = (sym: string) => setSelectedTicker(sym.toUpperCase())
+  // The nonce bumps on every click so re-selecting the *same* ticker still scrolls.
+  const selectTicker = (sym: string) => {
+    setSelectedTicker(sym.toUpperCase())
+    setScrollNonce((n) => n + 1)
+  }
 
   useEffect(() => {
-    if (selectedTicker) {
+    if (!selectedTicker) return
+    // Wait a frame so the (possibly just-mounted) detail panel is laid out first.
+    const id = requestAnimationFrame(() => {
       detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, [selectedTicker])
+    })
+    return () => cancelAnimationFrame(id)
+  }, [selectedTicker, scrollNonce])
 
   return (
     <div className="dashboard">
@@ -77,7 +85,7 @@ export default function Dashboard() {
       </div>
 
       {selectedTicker && (
-        <div className="panel fade-in" ref={detailRef} style={{ marginTop: '1.5rem' }}>
+        <div className="panel fade-in" ref={detailRef} style={{ marginTop: '1.5rem', scrollMarginTop: '1rem' }}>
           <div className="panel-header">
             <div className="panel-title">
               📊
