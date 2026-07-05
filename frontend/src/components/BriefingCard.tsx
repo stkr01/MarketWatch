@@ -32,9 +32,11 @@ function renderContent(text: string) {
   })
 }
 
-function fmtDay(dateStr: string) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' })
+// Format: "2026-05-05 Kl14:04"
+function fmtBriefingStamp(dateStr: string, iso?: string | null) {
+  if (!iso) return dateStr
+  const d = new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z')
+  return `${dateStr} Kl${d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`
 }
 
 export default function BriefingCard() {
@@ -122,10 +124,9 @@ export default function BriefingCard() {
                         className="briefing-hist-row"
                         onClick={() => setOpenDate(open ? null : b.date)}
                       >
-                        <span className="briefing-hist-date">{fmtDay(b.date)}</span>
+                        <span className="briefing-hist-date">{fmtBriefingStamp(b.date, b.generated_at)}</span>
                         <span className="briefing-hist-meta">
-                          {b.generated_at && new Date(b.generated_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                          {b.usage_tokens ? ` · ${b.usage_tokens} tok` : ''}
+                          {b.usage_tokens ? `${b.usage_tokens} tok` : ''}
                         </span>
                         <span className="briefing-hist-caret">{open ? '▾' : '▸'}</span>
                       </button>

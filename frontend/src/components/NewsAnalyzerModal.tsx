@@ -46,12 +46,11 @@ function dirMeta(d: string) {
   return DIR[d as keyof typeof DIR] ?? DIR.neutral
 }
 
+// Format: "2026-05-05 Kl14:04"
 function fmtDate(iso?: string) {
   if (!iso) return ''
   const d = new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z')
-  return d.toLocaleString('sv-SE', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-  })
+  return `${d.toLocaleDateString('sv-SE')} Kl${d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`
 }
 
 export default function NewsAnalyzerModal({ onClose, onSelectTicker }: Props) {

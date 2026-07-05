@@ -48,14 +48,16 @@ const DIR = {
 } as const
 const dirMeta = (d: string) => DIR[d as keyof typeof DIR] ?? DIR.neutral
 
-function fmtDate(iso?: string) {
+// Format: "2026-05-05 Kl14:04"
+function fmtStamp(iso?: string) {
   if (!iso) return ''
   const d = new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z')
-  return d.toLocaleString('sv-SE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return `${d.toLocaleDateString('sv-SE')} Kl${d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`
 }
-function fmtDay(dateStr: string) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' })
+function fmtBriefingStamp(dateStr: string, iso?: string | null) {
+  if (!iso) return dateStr
+  const d = new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z')
+  return `${dateStr} Kl${d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}`
 }
 
 /** Minimal markdown-ish renderer: # headings, **bold**, line breaks. */
@@ -128,10 +130,9 @@ export default function HistoryModal({ onClose, onSelectTicker }: Props) {
                   return (
                     <div className="briefing-hist-item" key={b.date}>
                       <button className="briefing-hist-row" onClick={() => setOpenDate(open ? null : b.date)}>
-                        <span className="briefing-hist-date">{fmtDay(b.date)}</span>
+                        <span className="briefing-hist-date">{fmtBriefingStamp(b.date, b.generated_at)}</span>
                         <span className="briefing-hist-meta">
-                          {b.generated_at && new Date(b.generated_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                          {b.usage_tokens ? ` · ${b.usage_tokens} tok` : ''}
+                          {b.usage_tokens ? `${b.usage_tokens} tok` : ''}
                         </span>
                         <span className="briefing-hist-caret">{open ? '▾' : '▸'}</span>
                       </button>
@@ -151,7 +152,7 @@ export default function HistoryModal({ onClose, onSelectTicker }: Props) {
                 <div className="nm-result">
                   {newsItem.data.title && <div className="nm-title">{newsItem.data.title}</div>}
                   <div className="nm-meta">
-                    <span>🕐 {fmtDate(newsItem.data.created_at)}</span>
+                    <span>🕐 {fmtStamp(newsItem.data.created_at)}</span>
                     {newsItem.data.source_url && (
                       <a href={newsItem.data.source_url} target="_blank" rel="noopener noreferrer" className="nm-src">🔗 Källa</a>
                     )}
@@ -205,7 +206,7 @@ export default function HistoryModal({ onClose, onSelectTicker }: Props) {
                   <div className="nm-hist-main">
                     <div className="nm-hist-title">{h.title || h.summary.slice(0, 80) || 'Analys'}</div>
                     <div className="nm-hist-sub">
-                      <span>🕐 {fmtDate(h.created_at)}</span>
+                      <span>🕐 {fmtStamp(h.created_at)}</span>
                       <span>· {h.asset_count} assets</span>
                       {h.impact_max > 0 && <span className="nm-hist-impact">· max {h.impact_max}/5</span>}
                     </div>
