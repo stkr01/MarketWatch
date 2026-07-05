@@ -14,12 +14,14 @@ import SettingsPanel from '../components/SettingsPanel'
 import BriefingCard from '../components/BriefingCard'
 import ActionBar from '../components/ActionBar'
 import NewsAnalyzerModal from '../components/NewsAnalyzerModal'
+import HistoryModal from '../components/HistoryModal'
 import { yahooUrl } from '../utils'
 
 export default function Dashboard() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
   const [scrollNonce, setScrollNonce] = useState(0)
   const [newsOpen, setNewsOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const detailRef = useRef<HTMLDivElement>(null)
 
   // Selecting a ticker anywhere opens the in-app detail panel and scrolls to it.
@@ -59,7 +61,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <ActionBar onOpenNews={() => setNewsOpen(true)} />
+      <ActionBar onOpenNews={() => setNewsOpen(true)} onOpenHistory={() => setHistoryOpen(true)} />
 
       <ScanStatusBar />
 
@@ -112,6 +114,13 @@ export default function Dashboard() {
         <NewsAnalyzerModal
           onClose={() => setNewsOpen(false)}
           onSelectTicker={(sym) => { setNewsOpen(false); selectTicker(sym) }}
+        />
+      )}
+
+      {historyOpen && (
+        <HistoryModal
+          onClose={() => setHistoryOpen(false)}
+          onSelectTicker={(sym) => { setHistoryOpen(false); selectTicker(sym) }}
         />
       )}
     </div>

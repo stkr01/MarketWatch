@@ -4,10 +4,11 @@ import TraceButton from './TraceButton'
 
 interface Props {
   onOpenNews: () => void
+  onOpenHistory: () => void
 }
 
 /** Top action bar — home for global action buttons (scan, news analyser, …). */
-export default function ActionBar({ onOpenNews }: Props) {
+export default function ActionBar({ onOpenNews, onOpenHistory }: Props) {
   const qc = useQueryClient()
 
   const { mutate: triggerScan, isPending } = useMutation({
@@ -29,6 +30,7 @@ export default function ActionBar({ onOpenNews }: Props) {
         {isPending ? <><span className="spinner" />Scanning…</> : <>◈ Scan Now</>}
       </TraceButton>
       <TraceButton variant="green" onClick={onOpenNews}>📰 News Analyser</TraceButton>
+      <TraceButton variant="gold" onClick={onOpenHistory}>🕐 Historik</TraceButton>
     </div>
   )
 }
