@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Pre-Market News → Analyser",
+  "version": "1.0.0",
+  "description": "Skickar aktuell sida till Krantz Pre-Market News Analyser och sparar analysen i historiken.",
+  "action": {
+    "default_title": "Analysera sidan i News Analyser",
+    "default_icon": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+  },
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["activeTab", "scripting", "notifications", "storage"],
+  "host_permissions": [
+    "http://skzdev02/*",
+    "http://100.94.139.84/*"
+  ],
+  "options_page": "options.html"
+}

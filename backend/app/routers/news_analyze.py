@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class NewsAnalyzeRequest(BaseModel):
     url: str | None = None
     text: str | None = None
+    title: str | None = None  # supplied when a client sends pre-extracted text
 
 
 @router.post("/news/analyze")
@@ -28,7 +29,7 @@ async def news_analyze(payload: NewsAnalyzeRequest, db: Session = Depends(get_db
     if not settings.ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="Claude API not configured")
 
-    title = None
+    title = (payload.title or "").strip() or None
     text = (payload.text or "").strip()
 
     # No pasted text → try to fetch the URL. On failure, 422 so the UI can

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <title>Pre-Market News Analyser – Inställningar</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #0b1220; color: #e5e9f0; margin: 0; padding: 24px; }
+    .card { max-width: 460px; }
+    h1 { font-size: 1.1rem; margin: 0 0 4px; }
+    p { color: #9aa4b8; font-size: 0.86rem; margin: 0 0 16px; }
+    label { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9aa4b8; margin-bottom: 6px; }
+    input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid #2a3550; background: #131b2e; color: #e5e9f0; font-size: 0.95rem; }
+    input:focus { outline: none; border-color: #22c55e; }
+    button { margin-top: 14px; padding: 9px 16px; border-radius: 8px; border: none; background: #22c55e; color: #06210f; font-weight: 700; cursor: pointer; }
+    .ok { color: #22c55e; font-size: 0.85rem; margin-top: 10px; height: 1em; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>📈 Pre-Market News Analyser</h1>
+    <p>Adress till dashboardens backend. Standard fungerar på Tailscale-nätet.</p>
+    <label for="api">Backend-URL</label>
+    <input id="api" type="text" placeholder="http://skzdev02:3000" />
+    <button id="save">Spara</button>
+    <div class="ok" id="status"></div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>
