@@ -110,6 +110,21 @@ class Briefing(Base):
     usage_tokens = Column(Integer, nullable=True)
 
 
+class NewsAnalysis(Base):
+    """A saved News Analyser run (URL/text → Swedish summary + affected assets)."""
+    __tablename__ = "news_analyses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    source_url = Column(String, nullable=True)
+    title = Column(String, nullable=True)
+    summary = Column(Text)
+    overall = Column(Text, nullable=True)
+    assets = Column(Text)  # JSON-encoded list of affected assets
+    impact_max = Column(Integer, default=0)  # highest impact_score, for the history list
+    usage_tokens = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AppSetting(Base):
     """Runtime-adjustable setting (overrides an env default), editable from the UI."""
     __tablename__ = "app_settings"

@@ -1454,6 +1454,50 @@ td .ticker-link { cursor: pointer; }
   font-size: 0.76rem; color: var(--text-dim);
 }
 
+/* News Analyser: tabs, meta, history */
+.nm-tabs { display: flex; gap: 0.35rem; margin-left: auto; margin-right: 0.75rem; }
+.nm-tab {
+  background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+  font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  padding: 0.35rem 0.8rem; border-radius: 999px;
+}
+.nm-tab:hover { color: var(--text); border-color: var(--border-strong); }
+.nm-tab.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft, rgba(120,140,180,0.12)); }
+
+.nm-meta {
+  display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: center;
+  font-size: 0.76rem; color: var(--text-dim); margin: -0.4rem 0 0.6rem;
+}
+.nm-src { color: var(--accent); text-decoration: none; }
+.nm-src:hover { text-decoration: underline; }
+
+.nm-back {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 0.85rem; padding: 0; margin-bottom: 0.4rem;
+}
+.nm-back:hover { color: var(--text); }
+
+.nm-hist { display: flex; flex-direction: column; gap: 0.5rem; }
+.nm-hist-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  cursor: pointer;
+}
+.nm-hist-item:hover { border-color: var(--accent); background: var(--surface-hover); }
+.nm-hist-main { min-width: 0; flex: 1; }
+.nm-hist-title {
+  font-weight: 600; color: var(--text); font-size: 0.9rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nm-hist-sub { display: flex; gap: 0.4rem; flex-wrap: wrap; font-size: 0.74rem; color: var(--text-dim); margin-top: 0.25rem; }
+.nm-hist-impact { color: var(--accent); font-weight: 600; }
+.nm-hist-del {
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: 0.9rem; padding: 0.25rem 0.4rem; border-radius: 6px; flex-shrink: 0;
+}
+.nm-hist-del:hover { background: var(--down-soft); color: var(--down); }
+
 /* ---------- Market movers ---------- */
 .mv-list { display: flex; flex-direction: column; gap: 0.35rem; }
 .mv-row {
