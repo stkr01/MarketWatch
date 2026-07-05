@@ -59,6 +59,24 @@ async def get_briefing(db: Session = Depends(get_db)):
     )
 
 
+@router.get("/briefing/history", response_model=list[BriefingResponse])
+async def briefing_history(limit: int = 30, db: Session = Depends(get_db)):
+    """Past morning briefings, newest first (one per calendar day)."""
+    rows = (
+        db.query(Briefing)
+        .order_by(desc(Briefing.date))
+        .limit(max(1, min(limit, 100)))
+        .all()
+    )
+    return [
+        BriefingResponse(
+            date=b.date, content=b.content,
+            generated_at=b.generated_at, usage_tokens=b.usage_tokens,
+        )
+        for b in rows
+    ]
+
+
 @router.post("/briefing/generate", response_model=BriefingResponse)
 async def create_briefing(db: Session = Depends(get_db)):
     """Generate (or regenerate) today's morning briefing via Claude."""

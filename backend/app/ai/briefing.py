@@ -34,20 +34,20 @@ def generate_briefing(candidates: list[dict], econ_events: list[dict]) -> dict:
     else:
         econ_lines = "(no scheduled US economic releases today)"
 
-    prompt = f"""You are a pre-market swing trading assistant. Write a concise morning briefing (swing trades, 1–30 day holds, US equities).
+    prompt = f"""Du är en assistent för swingtrading före marknadsöppning (swingaffärer, 1–30 dagars innehav, amerikanska aktier). Skriv en kort morgonbriefing PÅ SVENSKA.
 
-SCREENED CANDIDATES:
+SCREENADE KANDIDATER:
 {cand_lines}
 
-TODAY'S US ECONOMIC CALENDAR:
+DAGENS AMERIKANSKA EKONOMISKA KALENDER:
 {econ_lines}
 
-Write the briefing with these short sections:
-1. **Market Setup** — 1–2 sentences on the day's tone given the economic calendar (call out high-impact events and their timing).
-2. **Top Candidates** — for the 2–3 most interesting screened names, one line each on why (catalyst + technical), or say none stand out.
-3. **Watch-outs** — key risks or timing (e.g. events that could whipsaw price).
+Skriv briefingen med dessa korta avsnitt (använd exakt dessa svenska rubriker):
+1. **Marknadsläge** — 1–2 meningar om dagens ton givet den ekonomiska kalendern (lyft fram händelser med hög påverkan och deras tidpunkt, ange tider i ET).
+2. **Toppkandidater** — för de 2–3 mest intressanta screenade namnen, en rad var om varför (katalysator + teknik), eller skriv att inga sticker ut.
+3. **Att bevaka** — viktiga risker eller tidpunkter (t.ex. händelser som kan svänga priset kraftigt).
 
-Be direct and actionable. Do not give financial advice disclaimers. Keep it under 220 words."""
+Var rak och handlingsbar. Använd inga friskrivningar om finansiell rådgivning. Håll dig under 220 ord. Svara enbart på svenska."""
 
     response = client.messages.create(
         model=MODEL,
