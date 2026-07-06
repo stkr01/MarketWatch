@@ -922,7 +922,7 @@ td .ticker-link { cursor: pointer; }
 
 .econ-item {
   display: grid;
-  grid-template-columns: 52px 1fr auto;
+  grid-template-columns: 68px 1fr auto;
   gap: 0.75rem;
   align-items: center;
   padding: 0.75rem 1.35rem;
@@ -943,6 +943,16 @@ td .ticker-link { cursor: pointer; }
   font-size: 0.9rem;
   color: var(--text);
 }
+
+.econ-countdown {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-top: 0.15rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.econ-countdown.soon { color: var(--accent); }
 
 .econ-title { font-size: 0.9rem; font-weight: 500; }
 .econ-sub {
