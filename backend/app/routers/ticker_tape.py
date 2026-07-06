@@ -23,7 +23,11 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Fixed market symbols shown before the watchlist. (symbol, label, kind)
+# Futures lead the tape — they trade overnight, so they signal pre-market
+# direction before the cash indices open.
 MARKET_SYMBOLS: list[tuple[str, str, str]] = [
+    ("ES=F", "S&P Fut", "future"),
+    ("NQ=F", "Nasdaq Fut", "future"),
     ("^GSPC", "S&P 500", "index"),
     ("^IXIC", "Nasdaq", "index"),
     ("^DJI", "Dow Jones", "index"),
