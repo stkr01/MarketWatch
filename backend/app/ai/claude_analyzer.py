@@ -52,7 +52,7 @@ Focus on:
 2. Technical setup (gap, volume, EMA100 position)
 3. Risk/reward assessment
 
-Be concise and actionable."""
+Be concise and actionable. Svara på svenska."""
 
     response = client.messages.create(
         model="claude-opus-4-8",

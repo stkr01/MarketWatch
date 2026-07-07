@@ -5,7 +5,9 @@ from app.db import get_db
 from app.models import Ticker, ScanResult, NewsItem, AIAnalysis
 from app.schemas import AIAnalysisResponse
 from app.ai.claude_analyzer import analyze_stock_candidate, explain_gap, generate_trade_plan
+from app.collectors.market_data import get_market_data
 from app.config import settings
+from datetime import datetime
 import logging
 
 router = APIRouter()
@@ -83,43 +85,57 @@ async def analyze_stock(ticker: str, db: Session = Depends(get_db)):
 
     ticker_upper = ticker.upper()
 
-    # Get ticker
+    # Ticker may not be in the DB at all (e.g. a Market Mover pulled live from
+    # Yahoo that was never scanned). We still want to analyze it, so treat a
+    # missing ticker/scan as "fetch live data on demand" instead of a 404.
     ticker_obj = db.query(Ticker).filter(Ticker.symbol == ticker_upper).first()
-    if not ticker_obj:
-        raise HTTPException(status_code=404, detail=f"Stock {ticker} not found")
 
-    # Get latest scan result for this ticker
-    scan_result = db.query(ScanResult).filter(
-        ScanResult.ticker_id == ticker_obj.id
-    ).order_by(desc(ScanResult.timestamp)).first()
+    scan_result = None
+    if ticker_obj:
+        scan_result = db.query(ScanResult).filter(
+            ScanResult.ticker_id == ticker_obj.id
+        ).order_by(desc(ScanResult.timestamp)).first()
 
-    if not scan_result:
-        raise HTTPException(status_code=404, detail=f"No scan data for {ticker}")
-
-    # Get recent news
-    news_items = db.query(NewsItem).filter(
-        NewsItem.ticker_id == ticker_obj.id
-    ).order_by(desc(NewsItem.published_at)).limit(5).all()
-
-    news_dicts = [
-        {
-            "title": n.title,
-            "source": n.source,
-            "url": n.url,
-            "published_at": n.published_at
+    if scan_result:
+        # Use the persisted scan + any stored news for this ticker.
+        news_items = db.query(NewsItem).filter(
+            NewsItem.ticker_id == ticker_obj.id
+        ).order_by(desc(NewsItem.published_at)).limit(5).all()
+        news_dicts = [
+            {
+                "title": n.title,
+                "source": n.source,
+                "url": n.url,
+                "published_at": n.published_at,
+            }
+            for n in news_items
+        ]
+        market_data = {
+            "gap_pct": scan_result.gap_pct,
+            "volume": scan_result.volume,
+            "volume_avg_20": scan_result.volume_avg_20,
+            "price": scan_result.price,
+            "ema_100": scan_result.ema_100,
+            "above_ema_100": scan_result.above_ema_100,
         }
-        for n in news_items
-    ]
-
-    # Build market data dict for Claude
-    market_data = {
-        "gap_pct": scan_result.gap_pct,
-        "volume": scan_result.volume,
-        "volume_avg_20": scan_result.volume_avg_20,
-        "price": scan_result.price,
-        "ema_100": scan_result.ema_100,
-        "above_ema_100": scan_result.above_ema_100
-    }
+    else:
+        # On-demand: compute a live snapshot for an un-scanned ticker.
+        logger.info(f"No scan data for {ticker}; fetching live market data on demand")
+        live = get_market_data(ticker_upper)
+        if not live:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ingen marknadsdata hittades för {ticker}",
+            )
+        news_dicts = []  # no stored news for an un-added ticker
+        market_data = {
+            "gap_pct": live["gap_pct"],
+            "volume": live["volume"],
+            "volume_avg_20": live["volume_avg_20"],
+            "price": live["price"],
+            "ema_100": live["ema_100"],
+            "above_ema_100": live["above_ema_100"],
+        }
 
     try:
         logger.info(f"Requesting Claude analysis for {ticker}")
@@ -131,20 +147,32 @@ async def analyze_stock(ticker: str, db: Session = Depends(get_db)):
             news_items=news_dicts
         )
 
-        # Save analysis to database
-        analysis = AIAnalysis(
-            ticker_id=ticker_obj.id,
+        # Persist only when the ticker exists in the DB (AIAnalysis.ticker_id is
+        # a FK). Un-added movers get an ephemeral, non-persisted result.
+        if ticker_obj:
+            analysis = AIAnalysis(
+                ticker_id=ticker_obj.id,
+                response=claude_result["response"],
+                usage_tokens=claude_result.get("usage_tokens"),
+                prompt_version="v1"
+            )
+            db.add(analysis)
+            db.commit()
+            logger.info(f"Analysis saved for {ticker}")
+            return AIAnalysisResponse.from_orm(analysis)
+
+        logger.info(f"Returning ephemeral (live) analysis for {ticker}")
+        return AIAnalysisResponse(
+            id=0,
+            ticker_id=0,
+            requested_at=datetime.utcnow(),
+            prompt_version="v1-live",
             response=claude_result["response"],
             usage_tokens=claude_result.get("usage_tokens"),
-            prompt_version="v1"
         )
-        db.add(analysis)
-        db.commit()
 
-        logger.info(f"Analysis saved for {ticker}")
-
-        return AIAnalysisResponse.from_orm(analysis)
-
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error analyzing {ticker}: {str(e)}")
         raise HTTPException(
