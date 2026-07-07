@@ -14,25 +14,52 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def _live_scan_result(ticker: str) -> ScanResult:
+    """
+    Build an *unpersisted* ScanResult from a live yfinance snapshot.
+
+    Lets the trade tools work for tickers that were never scanned (e.g. a
+    Market Mover). The instance is never added to the session; it just carries
+    the metrics so _market_data / _compute_levels can read them by attribute.
+    """
+    live = get_market_data(ticker)
+    if not live:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Ingen marknadsdata hittades för {ticker}",
+        )
+    columns = {c.name for c in ScanResult.__table__.columns}
+    return ScanResult(**{k: v for k, v in live.items() if k in columns})
+
+
 def _latest_scan_and_news(ticker: str, db: Session):
-    """Shared lookup: ticker row, its latest scan result, and recent news dicts."""
+    """Shared lookup: ticker row, its latest scan result, and recent news dicts.
+
+    Falls back to a live snapshot (unpersisted ScanResult, empty news) when the
+    ticker or its scan isn't in the DB, so the trade tools work for un-scanned
+    tickers such as Market Movers.
+    """
     if not settings.ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="Claude API not configured")
 
     ticker_obj = db.query(Ticker).filter(Ticker.symbol == ticker.upper()).first()
-    if not ticker_obj:
-        raise HTTPException(status_code=404, detail=f"Stock {ticker} not found")
 
-    scan_result = db.query(ScanResult).filter(
-        ScanResult.ticker_id == ticker_obj.id
-    ).order_by(desc(ScanResult.timestamp)).first()
-    if not scan_result:
-        raise HTTPException(status_code=404, detail=f"No scan data for {ticker}")
+    scan_result = None
+    news_dicts = []
+    if ticker_obj:
+        scan_result = db.query(ScanResult).filter(
+            ScanResult.ticker_id == ticker_obj.id
+        ).order_by(desc(ScanResult.timestamp)).first()
+        if scan_result:
+            news_items = db.query(NewsItem).filter(
+                NewsItem.ticker_id == ticker_obj.id
+            ).order_by(desc(NewsItem.published_at)).limit(6).all()
+            news_dicts = [{"title": n.title, "source": n.source} for n in news_items]
 
-    news_items = db.query(NewsItem).filter(
-        NewsItem.ticker_id == ticker_obj.id
-    ).order_by(desc(NewsItem.published_at)).limit(6).all()
-    news_dicts = [{"title": n.title, "source": n.source} for n in news_items]
+    if scan_result is None:
+        # On-demand: compute a live snapshot for an un-scanned ticker.
+        logger.info(f"No scan data for {ticker}; fetching live market data on demand")
+        scan_result = _live_scan_result(ticker.upper())
 
     return ticker_obj, scan_result, news_dicts
 

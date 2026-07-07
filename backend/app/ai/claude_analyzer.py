@@ -97,7 +97,7 @@ Data:
 Recent headlines:
 {news_summary}
 
-If there is no clear catalyst in the headlines, say so plainly (e.g. sympathy move, sector rotation, or no obvious news). Be specific and concise; do not give financial advice disclaimers."""
+If there is no clear catalyst in the headlines, say so plainly (e.g. sympathy move, sector rotation, or no obvious news). Be specific and concise; do not give financial advice disclaimers. Svara på svenska."""
 
     resp = client.messages.create(
         model="claude-opus-4-8", max_tokens=250,
@@ -129,7 +129,7 @@ Levels (already calculated, do NOT recompute):
 - Stop ${levels['stop']:.2f}
 - Target ${levels['target']:.2f}  (reward:risk ≈ {levels['rr']:.1f}R)
 
-Be direct and actionable. It's fine to say the setup is weak/avoid if the data warrants."""
+Be direct and actionable. It's fine to say the setup is weak/avoid if the data warrants. Svara på svenska."""
 
     resp = client.messages.create(
         model="claude-opus-4-8", max_tokens=400,
