@@ -20,6 +20,19 @@ function impactClass(impact: string): string {
   return 'impact-low'
 }
 
+// The event's release time expressed in Swedish wall-clock time. The feed's
+// `datetime` carries the US Eastern offset, so converting to Europe/Stockholm
+// gives the moment as Stefan sees it on his own clock (e.g. 08:30 ET → 14:30).
+function formatStockholmTime(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('sv-SE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Stockholm',
+  })
+}
+
 // Time left until `iso` (which carries the event's ET offset). Computed against
 // the viewer's own clock, so it's timezone-agnostic — no ET↔local juggling.
 function formatCountdown(iso: string, now: number): string | null {
@@ -58,6 +71,7 @@ export default function EconomicCalendar() {
       <div className="panel-header">
         <div className="panel-title">
           🗓️ US Economic Calendar
+          <span className="count">svensk tid</span>
           {upcomingCount > 0 && <span className="count">{upcomingCount} upcoming</span>}
         </div>
       </div>
@@ -82,7 +96,7 @@ export default function EconomicCalendar() {
               className={`econ-item ${!e.is_upcoming ? 'past' : ''} ${i === nextIdx ? 'next' : ''}`}
             >
               <div className="econ-time">
-                {e.time}
+                {formatStockholmTime(e.datetime)}
                 {countdown && (
                   <div className={`econ-countdown ${secsLeft <= 900 ? 'soon' : ''}`}>{countdown}</div>
                 )}
