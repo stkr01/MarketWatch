@@ -77,20 +77,19 @@ async def briefing_history(limit: int = 30, db: Session = Depends(get_db)):
     ]
 
 
-@router.post("/briefing/generate", response_model=BriefingResponse)
-async def create_briefing(db: Session = Depends(get_db)):
-    """Generate (or regenerate) today's morning briefing via Claude."""
+def generate_and_store_briefing(db: Session) -> Briefing:
+    """Generate today's morning briefing via Claude and upsert it (one row per ET day).
+
+    Shared by the POST endpoint and the overnight scheduler job. Raises on failure;
+    callers translate that into an HTTP error or a logged scheduler error.
+    """
     if not settings.ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=500, detail="Claude API not configured")
+        raise RuntimeError("Claude API not configured")
 
     candidates = _latest_candidates(db)
     econ_events = get_us_calendar_today()
 
-    try:
-        result = generate_briefing(candidates, econ_events)
-    except Exception as e:
-        logger.error(f"Briefing generation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Briefing failed: {e}")
+    result = generate_briefing(candidates, econ_events)
 
     today = _today_et()
     b = db.query(Briefing).filter(Briefing.date == today).first()
@@ -107,6 +106,20 @@ async def create_briefing(db: Session = Depends(get_db)):
         db.add(b)
     db.commit()
     db.refresh(b)
+    return b
+
+
+@router.post("/briefing/generate", response_model=BriefingResponse)
+async def create_briefing(db: Session = Depends(get_db)):
+    """Generate (or regenerate) today's morning briefing via Claude."""
+    if not settings.ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="Claude API not configured")
+
+    try:
+        b = generate_and_store_briefing(db)
+    except Exception as e:
+        logger.error(f"Briefing generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Briefing failed: {e}")
 
     return BriefingResponse(
         date=b.date, content=b.content, generated_at=b.generated_at, usage_tokens=b.usage_tokens

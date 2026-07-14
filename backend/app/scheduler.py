@@ -10,6 +10,11 @@ logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
 
+# Timezone for the morning-briefing job. Stefan reads the dashboard in Sweden,
+# so 13:00 here means 13:00 Swedish local time.
+BRIEFING_TZ = "Europe/Stockholm"
+
+
 def run_market_scan():
     """Execute a full market scan (data collection + screening)"""
     try:
@@ -18,6 +23,21 @@ def run_market_scan():
         logger.info(f"Scan completed: {result['summary']}")
     except Exception as e:
         logger.error(f"Scan failed: {str(e)}", exc_info=True)
+
+
+def run_morning_briefing():
+    """Generate and store the morning briefing (overnight job)."""
+    from app.db import SessionLocal
+    from app.routers.briefing import generate_and_store_briefing
+
+    db = SessionLocal()
+    try:
+        b = generate_and_store_briefing(db)
+        logger.info(f"Morning briefing generated for {b.date} ({b.usage_tokens} tokens)")
+    except Exception as e:
+        logger.error(f"Morning briefing failed: {str(e)}", exc_info=True)
+    finally:
+        db.close()
 
 
 def start_scheduler():
@@ -51,6 +71,16 @@ def start_scheduler():
         )
         logger.info("Scheduler started - PROD MODE: scans every 5 minutes during pre-market hours (04:00-09:30 EST, Mon-Fri)")
 
+    # Morning briefing at 13:00 Swedish time, Mon-Fri.
+    scheduler.add_job(
+        run_morning_briefing,
+        CronTrigger(hour=13, minute=0, day_of_week="mon-fri", timezone=BRIEFING_TZ),
+        id="morning_briefing",
+        name="Morning briefing (13:00 Europe/Stockholm, Mon-Fri)",
+        replace_existing=True,
+    )
+    logger.info("Morning briefing job scheduled - 13:00 Europe/Stockholm, Mon-Fri")
+
 
 def stop_scheduler():
     """Stop the scheduler"""
@@ -63,6 +93,12 @@ def trigger_scan_now():
     """Manually trigger a scan immediately"""
     logger.info("Manual scan triggered")
     run_market_scan()
+
+
+def trigger_briefing_now():
+    """Manually trigger the morning briefing immediately (for testing)."""
+    logger.info("Manual morning briefing triggered")
+    run_morning_briefing()
 
 
 def get_next_run():
