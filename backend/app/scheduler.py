@@ -11,7 +11,7 @@ scheduler = BackgroundScheduler()
 
 
 # Timezone for the morning-briefing job. Stefan reads the dashboard in Sweden,
-# so 13:00 here means 13:00 Swedish local time.
+# so 14:00 here means 14:00 Swedish local time.
 BRIEFING_TZ = "Europe/Stockholm"
 
 
@@ -71,15 +71,19 @@ def start_scheduler():
         )
         logger.info("Scheduler started - PROD MODE: scans every 5 minutes during pre-market hours (04:00-09:30 EST, Mon-Fri)")
 
-    # Morning briefing at 13:00 Swedish time, Mon-Fri.
+    # Morning briefing at 14:00 Swedish time, Mon-Fri.
     scheduler.add_job(
         run_morning_briefing,
-        CronTrigger(hour=13, minute=0, day_of_week="mon-fri", timezone=BRIEFING_TZ),
+        CronTrigger(hour=14, minute=0, day_of_week="mon-fri", timezone=BRIEFING_TZ),
         id="morning_briefing",
-        name="Morning briefing (13:00 Europe/Stockholm, Mon-Fri)",
+        name="Morning briefing (14:00 Europe/Stockholm, Mon-Fri)",
         replace_existing=True,
     )
-    logger.info("Morning briefing job scheduled - 13:00 Europe/Stockholm, Mon-Fri")
+    logger.info("Morning briefing job scheduled - 14:00 Europe/Stockholm, Mon-Fri")
+
+    # Start the scheduler thread so the jobs added above actually fire.
+    scheduler.start()
+    logger.info("Scheduler thread started")
 
 
 def stop_scheduler():
