@@ -21,16 +21,16 @@ betalvägg-/JS-sidor som serverns URL-hämtning kan missa.
 - Klicka på tilläggets ikon (📈-staplarna).
 - En bricka på ikonen visar status: `…` (jobbar), `✓` (klar), `!` (fel),
   och en notis bekräftar. Analysen finns nu i historiken på
-  **http://skzdev02:3000**.
+  **http://skzdev04:3000**.
 
 ## Inställningar
 
-Backend-URL är förvald till `http://skzdev02:3000` (Tailscale). Vill du peka
+Backend-URL är förvald till `http://skzdev04:3000` (Tailscale). Vill du peka
 mot en annan adress: högerklicka tillägget → **Alternativ** / **Options**.
 
 > Obs: datorn måste nå backenden (samma Tailscale-nät). Tilläggets
-> `host_permissions` täcker `skzdev02` och `100.94.139.84`. Använder du en
-> annan värd behöver den läggas till i `manifest.json`.
+> `host_permissions` täcker `skzdev04` och `skzdev04.tail898daf.ts.net`.
+> Använder du en annan värd behöver den läggas till i `manifest.json`.
 
 ## Filer
 

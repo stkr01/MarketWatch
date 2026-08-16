@@ -1,4 +1,4 @@
-const DEFAULT_API = 'http://skzdev02:3000'
+const DEFAULT_API = 'http://skzdev04:3000'
 const input = document.getElementById('api')
 const status = document.getElementById('status')
 

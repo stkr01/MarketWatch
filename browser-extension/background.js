@@ -1,7 +1,7 @@
 // One-click: grab the current page, send it to the Pre-Market News Analyser,
 // and let the analysis show up in the dashboard history. No copy/paste.
 
-const DEFAULT_API = 'http://skzdev02:3000'
+const DEFAULT_API = 'http://skzdev04:3000'
 
 async function getApiBase() {
   const { apiBase } = await chrome.storage.sync.get('apiBase')
